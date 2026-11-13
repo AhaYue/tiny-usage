@@ -1,0 +1,120 @@
+/* Metric row titles */
+"5h Session" = "5 Saatlik Oturum";
+"Current session" = "Mevcut oturum";
+"Weekly" = "Haftalık";
+
+/* Window badges (5-hour session, weekly) */
+"5s" = "5s";
+"7g" = "7g";
+
+/* Duration unit suffixes (e.g. "5g 3s", "2s 10d") */
+"duration.unit.day" = "g";
+"duration.unit.hour" = "s";
+"duration.unit.minute" = "d";
+
+/* Card layout (v2) */
+"WEEKLY" = "HAFTALIK";
+"5h session" = "5 saatlik oturum";
+"5h session · %@" = "5 saatlik oturum · %@";
+"All models" = "Tüm modeller";
+"Usage limits" = "Kullanım limitleri";
+"Spending" = "Harcama";
+"Credit balance" = "Kredi bakiyesi";
+"AI credit" = "AI kredisi";
+"Resets at %@" = "%@'da sıfırlanır";
+
+/* Tooltip / status */
+"Loading..." = "Yükleniyor...";
+
+/* Empty state */
+"No active services detected.\nMake sure Claude Code, Codex, or Antigravity is running." = "Aktif servis bulunamadı.\nClaude Code, Codex veya Antigravity'nin çalıştığından emin ol.";
+
+/* Update */
+"Check for updates" = "Güncellemeleri denetle";
+
+/* Launch at login prompt */
+"Launch Mimir at login?" = "Mimir girişte açılsın mı?";
+"Mimir can open automatically each time you log in, so your usage is always in the menu bar. You can change this later in System Settings › General › Login Items." = "Mimir her oturum açtığında otomatik başlayabilir, böylece kullanımın hep menü çubuğunda olur. Bunu daha sonra Sistem Ayarları › Genel › Giriş Öğeleri'nden değiştirebilirsin.";
+"Launch at Login" = "Girişte Başlat";
+"Not Now" = "Şimdi Değil";
+
+/* Notifications */
+"🚀 %@ weekly quota refilled." = "🚀 %@ haftalık kota yenilendi.";
+"Your weekly quota is back to 100%. Pick up where you left off." = "Haftalık kotanız %100 oldu. Kaldığınız yerden devam edebilirsiniz.";
+"🚀 %@ monthly quota refilled." = "🚀 %@ aylık kota yenilendi.";
+"Your monthly quota is back to 100%. Pick up where you left off." = "Aylık kotanız %100 oldu. Kaldığınız yerden devam edebilirsiniz.";
+"🔋 %@ ready for a new sprint." = "🔋 %@ yeni sprint için hazır.";
+"Your 5-hour session is back to 100%. Pick up where you left off." = "5 saatlik oturum %100 oldu. Kaldığınız yerden devam edebilirsiniz.";
+"🪫 %@ 5-hour quota running out — %d%%" = "🪫 %@ 5 saatlik kota tükeniyor. — %%%d";
+"Resets at %@. ~%@ to go." = "Yenilenme saati %@. ~%@ içinde yenilenecek.";
+"Your 5-hour limit is running out." = "5 saatlik limitin tükeniyor.";
+"🚨 %@ weekly quota running out — %d%%" = "🚨 %@ haftalık kota tükeniyor. — %%%d";
+"Renews in ~%@." = "~%@ sonra yenilenecek.";
+"Your weekly limit is running out." = "Haftalık limitin tükeniyor.";
+"🚨 %@ monthly quota running out — %d%%" = "🚨 %@ aylık kota tükeniyor. — %%%d";
+"Your monthly limit is running out." = "Aylık limitin tükeniyor.";
+
+/* Status notes */
+"out of date" = "güncel değil";
+"token expired — open Claude Code" = "token süresi doldu — Claude Code'u aç";
+"claude token missing" = "Claude token'ı bulunamadı";
+"open Mimir to refresh Claude" = "Claude'u yenilemek için Mimir'i aç";
+"open Antigravity or Cockpit" = "Antigravity veya Cockpit'i aç";
+"no local source" = "yerel kaynak yok";
+
+/* Credit / billing labels */
+"Unlimited" = "Sınırsız";
+"%@ credits" = "%@ kredi";
+
+/* Antigravity info */
+"Quota is read from Antigravity's local language server. Antigravity must be running for live data; when it's closed, the last seen values are shown." = "Kota, Antigravity'nin yerel dil sunucusundan okunur. Canlı veri için Antigravity'nin açık olması gerekir; kapalıyken son görülen değerler gösterilir.";
+
+/* Widgets */
+"widget.detailed.description" = "Bakışta yapay zekâ kotası.";
+"widget.window.fiveHour" = "5s";
+"widget.window.weekly" = "7g";
+"widget.unavailable.title" = "Veri alınamadı";
+"widget.unavailable.app" = "%@ kapalı görünüyor";
+"widget.unavailable.action" = "Açmak için dokun";
+"popover.unavailable" = "%@ verisi alınamadı — açmak için dokun";
+"popover.unavailable.dismiss" = "Bu uyarıyı gizle";
+"widget.empty" = "Kotayı yüklemek için Mimir'i aç.";
+"widget.config.model" = "Model";
+"widget.config.description" = "Widget'ın hangi modeli göstereceğini seç.";
+
+/* Status menu */
+"Send anonymous statistics" = "Anonim istatistik gönder";
+"Quit Mimir" = "Mimir'den Çık";
+
+/* Prompt-free Claude hook */
+"Prompt-free Claude tracking" = "Parolasız Claude takibi";
+"Couldn't update Claude tracking" = "Claude takibi güncellenemedi";
+"Track Claude without the keychain prompt?" = "Claude'u parola sormadan takip et?";
+"Mimir can read Claude Code's own usage through a small status-line hook — no keychain permission prompt. It preserves any status line you already use and can be turned off anytime from Mimir's menu." = "Mimir, küçük bir durum-çubuğu (statusLine) hook'u ile Claude Code'un kendi kullanımını okuyabilir — keychain parola sorusu olmadan. Zaten kullandığın durum çubuğunu korur ve Mimir menüsünden istediğin zaman kapatılabilir.";
+"Enable" = "Etkinleştir";
+"~/.claude/settings.json is not valid JSON" = "~/.claude/settings.json geçerli bir JSON değil";
+"couldn't write to ~/.claude" = "~/.claude klasörüne yazılamadı";
+"%@ session" = "%@ oturum";
+"Renewal credit" = "Yenileme hakkı";
+"Weekly limit for this model" = "Bu modelin haftalık sınırı";
+"⏳ Reset credit expires in %@" = "⏳ Yenileme hakkı %@ sonra doluyor";
+"You have %@ waiting. Spend one now and it clears a used-up window — unused, it just lapses." = "Bekleyen %@ hakkın var. Şimdi kullanırsan tükenmiş pencereyi sıfırlar; kullanmazsan yanar.";
+"Cloud session credits" = "Bulut oturum kredisi";
+"expires %@" = "bitiş %@";
+"token expired — run codex login" = "oturum süresi doldu — codex login çalıştır";
+"%@ limit" = "%@ limit";
+"Cloud credit" = "Bulut kredisi";
+"Open at login" = "Girişte aç";
+"Notifications" = "Bildirimler";
+"Report an issue" = "Sorun bildir";
+"Support" = "Destek";
+"Settings" = "Ayarlar";
+"Version %@ — check for updates" = "Sürüm %@ — güncellemeleri denetle";
+"Couldn't change the login item" = "Giriş öğesi değiştirilemedi";
+"Mimir opens when you sign in." = "Oturum açtığında Mimir açılır.";
+"When a quota is about to run out." = "Bir kota bitmek üzereyken haber verir.";
+"Reads Claude Code without a keychain prompt." = "Claude Code'u anahtar zinciri sormadan okur.";
+"Usage counts only, never your data." = "Yalnızca kullanım sayıları, verin asla.";
+"Version" = "Sürüm";
+"Support Mimir" = "Mimir'e destek ol";
+"Join the beta" = "Beta'ya katıl";

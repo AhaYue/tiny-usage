@@ -1,0 +1,53 @@
+{
+  "mode": "normal; panel explicitly hidden before sampling",
+  "build": "release arm64",
+  "pid": 13598,
+  "measuredAt": "2026-11-13T22:28:23.551013+08:00",
+  "durationSeconds": 30.08,
+  "averageCpuPercentOneCore": 0.166,
+  "samples": [
+    {
+      "elapsedSeconds": 0.0,
+      "rssMiB": 130.17,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.43
+    },
+    {
+      "elapsedSeconds": 5.01,
+      "rssMiB": 130.17,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.43
+    },
+    {
+      "elapsedSeconds": 10.03,
+      "rssMiB": 130.17,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.43
+    },
+    {
+      "elapsedSeconds": 15.04,
+      "rssMiB": 130.17,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.43
+    },
+    {
+      "elapsedSeconds": 20.05,
+      "rssMiB": 130.41,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.48
+    },
+    {
+      "elapsedSeconds": 25.06,
+      "rssMiB": 130.31,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.48
+    },
+    {
+      "elapsedSeconds": 30.08,
+      "rssMiB": 130.16,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 3.48
+    }
+  ],
+  "limitation": "Short sample including any scheduled refresh; not a long-term leak benchmark. RSS includes shared resident mappings."
+}
