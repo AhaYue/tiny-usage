@@ -22,12 +22,12 @@ enum RefreshMode: Int, CaseIterable {
         }
     }
 
-    /// The settings row's subtitle: the mode, then what it actually does.
-    var summary: String {
+    /// The settings row's subtitle: what the chosen mode actually does.
+    var detail: String {
         switch self {
-        case .auto: "自动 · 每分钟读本地，网络 2–30 分钟自适应"
-        case .every5, .every15, .every30: "\(label)读取一次，到重置时刻不额外请求"
-        case .manual: "仅手动 · 只在点「刷新用量」时读取"
+        case .auto: "网络 2–30 分钟自适应"
+        case .every5, .every15, .every30: "本地与网络都按此间隔"
+        case .manual: "只在手动刷新时读取"
         }
     }
 

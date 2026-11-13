@@ -205,11 +205,11 @@ struct PopoverSettings {
     var desktopFallback: () -> Bool
     var toggleDesktopFallback: () -> Void
     var showRemaining: () -> Bool
-    var toggleShowRemaining: () -> Void
-    var menuStyle: () -> String
-    var cycleMenuStyle: () -> Void
-    var refreshMode: () -> String
-    var cycleRefreshMode: () -> Void
+    var setShowRemaining: (Bool) -> Void
+    var menuStyle: () -> Int
+    var setMenuStyle: (Int) -> Void
+    var refreshMode: () -> Int
+    var setRefreshMode: (Int) -> Void
     var authorizeCredentials: () -> Void
     var refresh: () -> Void
     var openDataFolder: () -> Void
@@ -235,9 +235,9 @@ struct SettingsFace: View {
         var launchAtLogin = false
         var claudeHook = false
         var desktopFallback = false
-        var showRemaining = false
-        var menuStyle = ""
-        var refreshMode = ""
+        var showRemaining = true
+        var menuStyle = 0
+        var refreshMode = 0
     }
 
     private func reload() {
@@ -251,7 +251,7 @@ struct SettingsFace: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            BrandingHeader(onGear: onBack)
+            BrandingHeader(onGear: onBack, closing: true)
 
             VStack(spacing: 0) {
                 row("power", "登录时启动", "登录后自动打开 AY Usage。",
@@ -260,10 +260,16 @@ struct SettingsFace: View {
                     checked: flags.claudeHook, action: settings.toggleClaudeHook)
                 row("desktopcomputer", "桌面版备用来源", "允许使用桌面版数据作为备用来源。",
                     checked: flags.desktopFallback, action: settings.toggleDesktopFallback)
-                row("percent", "菜单栏显示剩余额度", "仅影响菜单栏，详情始终显示剩余量。",
-                    checked: flags.showRemaining, action: settings.toggleShowRemaining)
-                row("menubar.rectangle", "菜单栏样式", flags.menuStyle, action: settings.cycleMenuStyle)
-                row("timer", "刷新频率", flags.refreshMode, action: settings.cycleRefreshMode)
+                pickerRow("percent", "显示数值", "颜色始终按剩余量。",
+                          selection: Binding(get: { flags.showRemaining ? 0 : 1 },
+                                             set: { settings.setShowRemaining($0 == 0); reload() }),
+                          options: [(0, "剩余量"), (1, "已用量")])
+                pickerRow("menubar.rectangle", "菜单栏样式", nil,
+                          selection: Binding(get: { flags.menuStyle }, set: { settings.setMenuStyle($0); reload() }),
+                          options: MenuBarRenderer.Style.allCases.map { ($0.rawValue, $0.label) })
+                pickerRow("timer", "刷新频率", RefreshMode(rawValue: flags.refreshMode)?.detail,
+                          selection: Binding(get: { flags.refreshMode }, set: { settings.setRefreshMode($0); reload() }),
+                          options: RefreshMode.allCases.map { ($0.rawValue, $0.label) })
                 row("key", "授权凭据", nil, action: settings.authorizeCredentials)
                 row("arrow.clockwise", "刷新用量", nil, action: settings.refresh)
                 row("folder", "打开数据文件夹", nil, action: settings.openDataFolder)
@@ -288,6 +294,40 @@ struct SettingsFace: View {
         }
         .padding(.vertical, 4)
         .onAppear(perform: reload)
+    }
+
+    /// A setting with a few named values: the title and what it means on the left, a pop-up menu
+    /// with the current value on the right — the choices are visible, not hidden behind clicks.
+    private func pickerRow(_ symbol: String, _ title: String, _ subtitle: String?,
+                           selection: Binding<Int>, options: [(Int, String)]) -> some View {
+        HStack(spacing: 11) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .light))
+                .foregroundStyle(Color.primary.opacity(0.6))
+                .frame(width: 22, height: 22)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(Color.primary.opacity(0.92))
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundStyle(Color.primary.opacity(0.45))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 8)
+            Picker(title, selection: selection) {
+                ForEach(options, id: \.0) { Text($0.1).tag($0.0) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .controlSize(.small)
+            .fixedSize()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// One setting. `checked` present makes it a switch (a plain tick, not a control — the row is
@@ -376,6 +416,8 @@ struct BrandingHeader: View {
     /// Newest observation across the cards, shown as "更新于 3 分钟前" beside the refresh button.
     var updatedAt: Date? = nil
     var now: Date = Date()
+    /// On the settings face the same button closes them: an ✕, so it reads as "back", not "more settings".
+    var closing = false
 
     var body: some View {
         HStack(spacing: 7) {
@@ -402,15 +444,15 @@ struct BrandingHeader: View {
                 .help(refreshing ? "正在刷新" : "刷新")
             }
             Button(action: onGear) {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 15, weight: .regular))
+                Image(systemName: closing ? "xmark" : "gearshape")
+                    .font(.system(size: closing ? 13 : 15, weight: closing ? .semibold : .regular))
                     .foregroundStyle(Color.primary.opacity(0.55))
                     .frame(width: 22, height: 22)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .pointingHandCursor()
-            .help(String(localized: "Settings"))
+            .help(closing ? "关闭设置" : String(localized: "Settings"))
         }
         // Line the header up with the cards below it: "mimir" starts where a card's brand icon does.
         .padding(.horizontal, 22)
@@ -1016,10 +1058,13 @@ struct QuotaLine: View {
     let percent: Int
     let resetAt: Date?
     let now: Date
+    /// Chosen from what's *left*, whichever number is shown — 90% used is red either way.
     let color: Color
+    /// The "显示数值" setting, shared with the menu bar; observed so a change applies at once.
+    @AppStorage("ay.showRemaining") private var showRemaining = true
 
     var body: some View {
-        let value = clampPct(percent)
+        let value = showRemaining ? clampPct(percent) : 100 - clampPct(percent)
         HStack(spacing: 8) {
             Text(label)
                 .font(.system(size: 11.5, weight: .medium))
@@ -1051,10 +1096,11 @@ struct QuotaLine: View {
     }
 
     private var resetHelp: String {
-        guard let resetAt, resetAt > now else { return "\(label)：重置时间未知" }
+        let kind = showRemaining ? "剩余" : "已用"
+        guard let resetAt, resetAt > now else { return "\(label)\(kind)：重置时间未知" }
         let f = DateFormatter()
         f.setLocalizedDateFormatFromTemplate(resetAt.timeIntervalSince(now) > 86_400 ? "EEEE HH:mm" : "HH:mm")
-        return "\(label)：\(f.string(from: resetAt)) 重置"
+        return "\(label)\(kind)：\(f.string(from: resetAt)) 重置"
     }
 }
 

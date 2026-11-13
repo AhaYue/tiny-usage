@@ -194,11 +194,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if self?.demo == false, RefreshMode.current != .manual { self?.lastAutoRefresh = Date(); self?.store.refresh() }
             },
             showRemaining: { [weak self] in self?.remaining ?? true },
-            toggleShowRemaining: { [weak self] in self?.toggleRemaining() },
-            menuStyle: { [weak self] in self?.style.label ?? "双条" },
-            cycleMenuStyle: { [weak self] in self?.cycleStyle() },
-            refreshMode: { RefreshMode.current.summary },
-            cycleRefreshMode: { UserDefaults.standard.set(RefreshMode.current.next.rawValue, forKey: RefreshMode.defaultsKey) },
+            setShowRemaining: { [weak self] in UserDefaults.standard.set($0, forKey: "ay.showRemaining"); self?.renderTitle() },
+            menuStyle: { [weak self] in self?.style.rawValue ?? 0 },
+            setMenuStyle: { [weak self] in UserDefaults.standard.set($0, forKey: "ay.menuStyle"); self?.renderTitle() },
+            refreshMode: { RefreshMode.current.rawValue },
+            setRefreshMode: { UserDefaults.standard.set($0, forKey: RefreshMode.defaultsKey) },
             authorizeCredentials: { [weak self] in if self?.demo == false { self?.store.refresh(userInitiated: true, force: true) } },
             refresh: { [weak self] in if self?.demo == false { self?.store.refresh(force: true) } },
             openDataFolder: {
