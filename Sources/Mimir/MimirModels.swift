@@ -315,6 +315,12 @@ enum TimeFormatter {
     static var hourUnit: String { String(localized: "duration.unit.hour") }
     static var minuteUnit: String { String(localized: "duration.unit.minute") }
 
+    /// Countdown in the panel's compact form — "6d 20h", "2h 30m" — whatever the UI language, so
+    /// the countdown column stays narrow and every row reads the same.
+    static func compact(from interval: TimeInterval) -> String {
+        duration(from: interval, day: "d", hour: "h", minute: "m")
+    }
+
     static func duration(from interval: TimeInterval) -> String {
         duration(from: interval, day: dayUnit, hour: hourUnit, minute: minuteUnit)
     }

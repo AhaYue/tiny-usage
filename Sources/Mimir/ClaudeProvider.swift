@@ -312,7 +312,7 @@ extension LiveUsageDataSource {
             let date = Self.shortDateFormatter.string(from: endsAt)
             return (endsAt, (0 ..< left).map { _ in
                 ModelStatus(name: date, remainingPercent: 0, resetAt: endsAt,
-                            valueText: TimeFormatter.duration(from: endsAt.timeIntervalSince(now)),
+                            valueText: TimeFormatter.compact(from: endsAt.timeIntervalSince(now)),
                             caption: Self.resetScopeLabel(grant["scope"]), symbol: "plus.circle",
                             groupLabel: String(localized: "Renewal credit"))
             })

@@ -348,7 +348,7 @@ extension LiveUsageDataSource {
         return expiries.map { expiresAt in
             ModelStatus(name: Self.shortDateFormatter.string(from: expiresAt),
                         remainingPercent: 0, resetAt: expiresAt,
-                        valueText: TimeFormatter.duration(from: expiresAt.timeIntervalSince(now)),
+                        valueText: TimeFormatter.compact(from: expiresAt.timeIntervalSince(now)),
                         symbol: "plus.circle", groupLabel: String(localized: "Renewal credit"))
         }
     }

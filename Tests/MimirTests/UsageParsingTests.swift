@@ -192,7 +192,7 @@ final class UsageParsingTests: XCTestCase {
             .string(from: credalNow.addingTimeInterval(3 * 86_400)))
         XCTAssertEqual(rows[1].name, LiveUsageDataSource.shortDateFormatter
             .string(from: credalNow.addingTimeInterval(6 * 86_400)))
-        XCTAssertEqual(rows[0].valueText, TimeFormatter.duration(from: 3 * 86_400))
+        XCTAssertEqual(rows[0].valueText, "3d")
     }
 
     /// A credit that lapsed between polls, and one that was already spent, are both dropped —

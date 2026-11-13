@@ -60,7 +60,8 @@ struct PopoverView: View {
     private func quotaFace(now: Date) -> some View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
-                        BrandingHeader(onGear: { flip() }, refreshing: store.isRefreshing, onRefresh: settings.refresh)
+                        BrandingHeader(onGear: { flip() }, refreshing: store.isRefreshing, onRefresh: settings.refresh,
+                                       updatedAt: store.services.compactMap(\.observedAt).max(), now: now)
                         notificationBanner
                         contentView(now: now)
                         MilowdaMark(version: settings.version)
@@ -372,6 +373,9 @@ struct BrandingHeader: View {
     /// whole of the refresh UI — no button, no timestamp.
     var refreshing = false
     var onRefresh: (() -> Void)? = nil
+    /// Newest observation across the cards, shown as "更新于 3 分钟前" beside the refresh button.
+    var updatedAt: Date? = nil
+    var now: Date = Date()
 
     var body: some View {
         HStack(spacing: 7) {
@@ -382,6 +386,12 @@ struct BrandingHeader: View {
 
             Spacer(minLength: 6)
 
+            if let updatedAt {
+                Text(Self.updatedText(updatedAt, now: now))
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.primary.opacity(0.42))
+                    .help(updatedAt.formatted(date: .abbreviated, time: .standard))
+            }
             if let onRefresh {
                 Button(action: onRefresh) {
                     Image(systemName: refreshing ? "hourglass" : "arrow.clockwise")
@@ -406,6 +416,13 @@ struct BrandingHeader: View {
         .padding(.horizontal, 22)
         .padding(.top, 10)
         .padding(.bottom, 6)
+    }
+
+    static func updatedText(_ at: Date, now: Date) -> String {
+        let age = now.timeIntervalSince(at)
+        if age < 90 { return "更新于 刚刚" }
+        if age < 3600 { return "更新于 \(Int(age / 60)) 分钟前" }
+        return "更新于 \(at.formatted(date: .omitted, time: .shortened))"
     }
 
     /// Opacity of letter `index` at `date`: one dip per 1.2s cycle, each letter 0.12s behind the
@@ -541,7 +558,7 @@ struct ServiceCard: View {
     @State private var expandedGrantScopes: Set<String> = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(panels.enumerated()), id: \.offset) { _, panel in
                 ProviderPanel(panel: panel.promotingLoneWindow(), now: now)
             }
@@ -578,24 +595,15 @@ struct ServiceCard: View {
                 }
                 .padding(.leading, Self.chipInset)
             }
-            VStack(alignment: .leading, spacing: 3) {
-                if service.isStale || service.dataUnavailable {
-                    Label("旧数据 · 尚未获得最新配额", systemImage: "exclamationmark.triangle")
-                }
-                if let note = service.statusNote, !note.isEmpty {
-                    Text(note).lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                }
-                if let observedAt = service.observedAt {
-                    Text("采集于 \(observedAt.formatted(date: .omitted, time: .shortened))")
-                        .help(observedAt.formatted(date: .complete, time: .standard))
-                }
+            if service.isStale || service.dataUnavailable {
+                Label(service.observedAt.map { "旧数据 · 采集于 \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "旧数据 · 尚未获得最新配额",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.system(size: 10))
+                    .foregroundStyle(quotaStatusColor(20))
             }
-            .font(.system(size: 10))
-            .foregroundStyle(Color.primary.opacity(0.60))
-            .padding(.horizontal, Self.chipInset)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(9)
+        .padding(.horizontal, 12).padding(.vertical, 11)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.regularMaterial)
@@ -647,24 +655,11 @@ struct ServiceCard: View {
         .contentShape(Capsule())
     }
 
-    /// A model's own weekly as a full-width row: what's left, the model, when it resets — in the
-    /// quota's own green / amber / red, the same colours its panel number would take.
+    /// A model's own weekly limit, in the same one-line form as the windows above it.
     private func modelLimitPill(_ row: (name: String, percent: Int, resetAt: Date?)) -> some View {
-        HStack(spacing: 6) {
-            Text("\(row.percent)%")
-                .monospacedDigit()
-                .padding(.horizontal, 5).padding(.vertical, 1)
-                .background(Capsule().fill(Color.primary.opacity(0.10)))
-            Text(row.name)
-            Spacer(minLength: 6)
-            Text(relDuration(row.resetAt, now) ?? "—").monospacedDigit()
-        }
-        .font(.system(size: 10.5, weight: .medium))
-        .foregroundStyle(quotaStatusColor(row.percent))
-        .padding(.horizontal, Self.chipInset).padding(.vertical, 4)
-        .frame(maxWidth: .infinity)
-        .background(Capsule().fill(Color.primary.opacity(0.06)))
-        .help(String(localized: "Weekly limit for this model"))
+        QuotaLine(label: row.name, percent: row.percent, resetAt: row.resetAt, now: now,
+                  color: service.isStale ? lockedQuotaColor : quotaStatusColor(row.percent))
+            .help(String(localized: "Weekly limit for this model"))
     }
 
     /// Under three days an expiry is worth noticing, under a day it's worth acting on. Above that
@@ -707,6 +702,8 @@ struct ServiceCard: View {
         if !panels.isEmpty {
             panels[0].plan = service.account?.plan
             panels[0].email = service.account?.email
+            panels[0].source = service.statusNote
+            panels[0].observedAt = service.observedAt
         }
         return panels
     }
@@ -836,6 +833,9 @@ struct PanelData {
     /// The login, on the card's first panel only: plan beside the title, e-mail under it.
     var plan: String? = nil
     var email: String? = nil
+    /// Where the numbers came from ("oauth usage api", "本地状态栏" …) and when — beside the title.
+    var source: String? = nil
+    var observedAt: Date? = nil
 
     /// A plan with one long window and no session (Codex Go's 30 days) shows it where the session
     /// sits — the big number, the clock and the face — instead of an empty corner above a capsule.
@@ -867,7 +867,7 @@ struct ProviderPanel: View {
     @State private var hideAccount: Task<Void, Never>?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 7) {
             header
             if let session = panel.session {
                 quotaRow(label: sessionLabel, percent: session.percent, resetAt: session.resetAt,
@@ -888,7 +888,6 @@ struct ProviderPanel: View {
                     .foregroundStyle(quotaStatusColor(0))
             }
         }
-        .padding(10)
         .overlay(alignment: .topLeading) {
             // Just the address, just under the plan it came from, over whatever sits there.
             if accountShown, let email = panel.email {
@@ -905,7 +904,12 @@ struct ProviderPanel: View {
                     .transition(.opacity)
             }
         }
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.05)))
+    }
+
+    /// Where the numbers came from and when — on hover over the name, not on the card.
+    private var sourceHelp: String {
+        let time = panel.observedAt.map { "采集于 \($0.formatted(date: .abbreviated, time: .shortened))" }
+        return [panel.source, time].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ")
     }
 
     /// "5 小时" for the session window; a lone long window promoted into its place keeps its own name.
@@ -913,49 +917,12 @@ struct ProviderPanel: View {
         panel.sessionFallback == 5 * 3600 ? "5小时" : panel.weeklyLabel
     }
 
-    /// One window, read left to right: what it is, how full, how much. The reset sits underneath in
-    /// small type.
+    /// One window on one line; see `QuotaLine`.
     private func quotaRow(label: String, percent: Int, resetAt: Date?, window: TimeInterval, locked: Bool) -> some View {
-        let value = clampPct(percent)
-        let color = locked || panel.stale ? lockedQuotaColor : quotaStatusColor(value)
-        return VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Text(label)
-                    .font(.system(size: 11.5, weight: .medium))
-                    .foregroundStyle(Color.primary.opacity(0.7))
-                    .frame(width: 40, alignment: .leading)
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.primary.opacity(0.1))
-                        Capsule().fill(color)
-                            .frame(width: value > 0 ? max(4, geo.size.width * CGFloat(value) / 100) : 0)
-                    }
-                }
-                .frame(height: 7)
-                Text("\(value)%")
-                    .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(color)
-                    .frame(width: 42, alignment: .trailing)
-            }
-            Text(resetText(resetAt))
-                .foregroundStyle(Color.primary.opacity(0.45))
-            .font(.system(size: 10.5).monospacedDigit())
-            .lineLimit(1)
-            .padding(.leading, 48)
-        }
-        .accessibilityElement(children: .combine)
+        QuotaLine(label: label, percent: percent, resetAt: resetAt, now: now,
+                  color: locked || panel.stale ? lockedQuotaColor : quotaStatusColor(clampPct(percent)))
     }
 
-    /// "2小时13分 后重置 · 14:30", with the weekday once the reset is more than a day out.
-    private func resetText(_ at: Date?) -> String {
-        guard let at, let rel = relDuration(at, now) else { return "重置时间未知" }
-        let clock = at.timeIntervalSince(now) > 86_400 ? Self.dayClockFormatter : Self.clockFormatter
-        return "\(rel) 后重置 · \(clock.string(from: at))"
-    }
-
-    private static let dayClockFormatter: DateFormatter = {
-        let f = DateFormatter(); f.setLocalizedDateFormatFromTemplate("EEEE HH:mm"); return f
-    }()
 
     /// The name with its plan beside it in a quieter tone — "Claude Team", as Claude's own usage page
     /// writes it — then the reset clock over the countdown and the number. The plan is the way to the
@@ -969,6 +936,7 @@ struct ProviderPanel: View {
                     .padding(.trailing, 2)
                 Text(panel.title)
                     .font(.system(size: 13, weight: .semibold))
+                    .help(sourceHelp)
                     .foregroundStyle(Color.primary.opacity(0.9))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -1020,7 +988,7 @@ let lockedQuotaColor = Color.primary.opacity(0.4)
 
 func relDuration(_ resetAt: Date?, _ now: Date) -> String? {
     guard let resetAt, resetAt.timeIntervalSince(now) > 0 else { return nil }
-    return TimeFormatter.duration(from: resetAt.timeIntervalSince(now))
+    return TimeFormatter.compact(from: resetAt.timeIntervalSince(now))
 }
 
 /// Status colour for a remaining-quota level — the same bands as the menu bar (see `QuotaLevel`).
@@ -1039,6 +1007,56 @@ extension NSColor {
     }
 }
 
+
+/// One quota on one line: name, bar, what's left, and the countdown at the end — every card's
+/// countdowns line up in one column, so a glance down the right edge says when things reset. The
+/// exact reset time is in the hover help rather than on a second line.
+struct QuotaLine: View {
+    let label: String
+    let percent: Int
+    let resetAt: Date?
+    let now: Date
+    let color: Color
+
+    var body: some View {
+        let value = clampPct(percent)
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 11.5, weight: .medium))
+                .foregroundStyle(Color.primary.opacity(0.65))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(width: 46, alignment: .leading)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.primary.opacity(0.1))
+                    Capsule().fill(color)
+                        .frame(width: value > 0 ? max(4, geo.size.width * CGFloat(value) / 100) : 0)
+                }
+            }
+            .frame(height: 6)
+            Text("\(value)%")
+                .font(.system(size: 12.5, weight: .semibold).monospacedDigit())
+                .foregroundStyle(color)
+                .frame(width: 40, alignment: .trailing)
+            Text(relDuration(resetAt, now) ?? "—")
+                .font(.system(size: 11).monospacedDigit())
+                .foregroundStyle(Color.primary.opacity(0.45))
+                .lineLimit(1)
+                .frame(width: 52, alignment: .trailing)
+        }
+        .frame(height: 18)
+        .help(resetHelp)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var resetHelp: String {
+        guard let resetAt, resetAt > now else { return "\(label)：重置时间未知" }
+        let f = DateFormatter()
+        f.setLocalizedDateFormatFromTemplate(resetAt.timeIntervalSince(now) > 86_400 ? "EEEE HH:mm" : "HH:mm")
+        return "\(label)：\(f.string(from: resetAt)) 重置"
+    }
+}
 
 /// Stand-in for a service that has no data yet: says so, says why, and offers the one action that
 /// can fix it. Never shows a percentage — there is none to show.
