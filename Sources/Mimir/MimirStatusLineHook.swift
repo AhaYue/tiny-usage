@@ -1,13 +1,13 @@
 import Foundation
 
-// Derived from Mimir (MIT). AY Usage owns separate files and never rewires Mimir's hook.
+// Derived from Mimir (MIT). Tiny Usage owns separate files and never rewires Mimir's hook.
 enum MimirStatusLineHook {
     private static var home: String {
-        ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"] ?? NSHomeDirectory()
+        ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] ?? NSHomeDirectory()
     }
     static var claudeDir: String {
         let env = ProcessInfo.processInfo.environment
-        if let test = env["AY_USAGE_TEST_HOME"] { return test + "/.claude" }
+        if let test = env["TINY_USAGE_TEST_HOME"] { return test + "/.claude" }
         if let configured = env["CLAUDE_CONFIG_DIR"], !configured.isEmpty { return configured }
         return resolvedLaunchDirectory ?? home + "/.claude"
     }
@@ -28,22 +28,22 @@ enum MimirStatusLineHook {
     static var claudeConfigFile: URL {
         URL(fileURLWithPath: claudeDir == home + "/.claude" ? home + "/.claude.json" : claudePath(".claude.json"))
     }
-    static var scriptPath: String { claudePath("ay-usage-statusline.sh") }
-    static var usagePath: String { claudePath("ay-usage.json") }
+    static var scriptPath: String { claudePath("tiny-usage-statusline.sh") }
+    static var usagePath: String { claudePath("tiny-usage.json") }
     static var settingsPath: String { claudePath("settings.json") }
-    static var prevPath: String { claudePath("ay-usage-statusline-backup.json") }
-    static var backupPath: String { claudePath("settings.json.ay-usage-backup") }
+    static var prevPath: String { claudePath("tiny-usage-statusline-backup.json") }
+    static var backupPath: String { claudePath("settings.json.tiny-usage-backup") }
     static var captureURL: URL {
-        let base = ProcessInfo.processInfo.environment["AY_USAGE_HOME"]
-            ?? home + "/Library/Application Support/AY Usage"
-        return URL(fileURLWithPath: base).appendingPathComponent("Helpers/AYUsageCapture")
+        let base = ProcessInfo.processInfo.environment["TINY_USAGE_HOME"]
+            ?? home + "/Library/Application Support/Tiny Usage"
+        return URL(fileURLWithPath: base).appendingPathComponent("Helpers/TinyUsageCapture")
     }
     static var hookCommand: String { "sh " + quote(scriptPath) }
     enum Outcome: Equatable {
         case enabled, chained, alreadyOn, disabled, failed(String)
     }
     static func quote(_ value: String) -> String { "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'" }
-    static func isOurCommand(_ command: String?) -> Bool { command?.contains("ay-usage-statusline.sh") ?? false }
+    static func isOurCommand(_ command: String?) -> Bool { command?.contains("tiny-usage-statusline.sh") ?? false }
     static func wiredSettings(from current: [String: Any]?) -> (settings: [String: Any], chained: String?) {
         var settings = current ?? [:]
         var status = settings["statusLine"] as? [String: Any] ?? [:]
@@ -65,9 +65,9 @@ enum MimirStatusLineHook {
         return settings
     }
     static func scriptBody(chained: String?, directory: String? = nil) -> String {
-        let output = (directory ?? claudeDir) + "/ay-usage.json"
+        let output = (directory ?? claudeDir) + "/tiny-usage.json"
         let previous = chained.map { " --previous " + quote($0) } ?? ""
-        return "#!/bin/sh\n# AY Usage — quota-only capture; full stdin stays in memory.\nexec "
+        return "#!/bin/sh\n# Tiny Usage — quota-only capture; full stdin stays in memory.\nexec "
             + quote(captureURL.path) + " --output " + quote(output) + previous + "\n"
     }
     static func isWired() -> Bool {
@@ -79,9 +79,9 @@ enum MimirStatusLineHook {
         try LiveUsageDataSource.secureAtomicWrite(data: data, to: url, permissions: permissions)
     }
     private static func installCapture(from source: URL?) throws {
-        let source = source ?? Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AYUsageCapture")
+        let source = source ?? Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/TinyUsageCapture")
         guard FileManager.default.isExecutableFile(atPath: source.path) else {
-            throw HookError.message("找不到采集程序，请从构建后的 AY Usage.app 启用。")
+            throw HookError.message("找不到采集程序，请从构建后的 Tiny Usage.app 启用。")
         }
         try write(Data(contentsOf: source), to: captureURL, permissions: 0o700)
     }
@@ -100,8 +100,8 @@ enum MimirStatusLineHook {
     @discardableResult static func enable() -> Outcome { enable(in: URL(fileURLWithPath: claudeDir)) }
     @discardableResult static func enable(in directory: URL, helperSource: URL? = nil) -> Outcome {
         let settingsURL = directory.appendingPathComponent("settings.json")
-        let recordURL = directory.appendingPathComponent("ay-usage-statusline-backup.json")
-        let scriptURL = directory.appendingPathComponent("ay-usage-statusline.sh")
+        let recordURL = directory.appendingPathComponent("tiny-usage-statusline-backup.json")
+        let scriptURL = directory.appendingPathComponent("tiny-usage-statusline.sh")
         do {
             let (originalBytes, root) = try readSettings(settingsURL)
             let existing = root["statusLine"] as? [String: Any]
@@ -118,7 +118,7 @@ enum MimirStatusLineHook {
             updated["statusLine"] = installed
             let record: [String: Any] = ["original": root["statusLine"] ?? NSNull(), "installed": installed]
             if let bytes = originalBytes {
-                let backup = directory.appendingPathComponent("settings.json.ay-usage-backup")
+                let backup = directory.appendingPathComponent("settings.json.tiny-usage-backup")
                 if !FileManager.default.fileExists(atPath: backup.path) { try write(bytes, to: backup) }
             }
             try write(JSONSerialization.data(withJSONObject: record, options: [.sortedKeys]), to: recordURL)
@@ -129,7 +129,7 @@ enum MimirStatusLineHook {
                 throw HookError.message("配置刚被其他程序修改，请重试。")
             }
             try write(JSONSerialization.data(withJSONObject: updated, options: [.prettyPrinted, .sortedKeys]), to: settingsURL)
-            FileManager.default.createFile(atPath: directory.appendingPathComponent("ay-usage-wired").path, contents: Data(), attributes: [.posixPermissions: 0o600])
+            FileManager.default.createFile(atPath: directory.appendingPathComponent("tiny-usage-wired").path, contents: Data(), attributes: [.posixPermissions: 0o600])
             return command == nil ? .enabled : .chained
         } catch let error as HookError { return .failed(error.text) }
         catch { return .failed(error.localizedDescription) }
@@ -137,7 +137,7 @@ enum MimirStatusLineHook {
     @discardableResult static func disable() -> Outcome { disable(in: URL(fileURLWithPath: claudeDir)) }
     @discardableResult static func disable(in directory: URL) -> Outcome {
         let settingsURL = directory.appendingPathComponent("settings.json")
-        let recordURL = directory.appendingPathComponent("ay-usage-statusline-backup.json")
+        let recordURL = directory.appendingPathComponent("tiny-usage-statusline-backup.json")
         do {
             let (bytes, root) = try readSettings(settingsURL)
             guard isOurCommand((root["statusLine"] as? [String: Any])?["command"] as? String) else {
@@ -154,7 +154,7 @@ enum MimirStatusLineHook {
             else { updated.removeValue(forKey: "statusLine") }
             guard FileManager.default.contents(atPath: settingsURL.path) == bytes else { throw HookError.message("配置已变化，请重试。") }
             try write(JSONSerialization.data(withJSONObject: updated, options: [.prettyPrinted, .sortedKeys]), to: settingsURL)
-            for name in ["ay-usage-statusline.sh", "ay-usage-statusline-backup.json", "ay-usage.json", "ay-usage-wired"] {
+            for name in ["tiny-usage-statusline.sh", "tiny-usage-statusline-backup.json", "tiny-usage.json", "tiny-usage-wired"] {
                 try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
             }
             return .disabled
@@ -166,7 +166,7 @@ enum MimirStatusLineHook {
     }
     static func wireExtraDirs(_ on: Bool, accounts: [ExtraAccount] = ExtraAccount.claude) {
         for account in accounts {
-            let marker = account.dir.appendingPathComponent("ay-usage-wired")
+            let marker = account.dir.appendingPathComponent("tiny-usage-wired")
             if on {
                 guard !FileManager.default.fileExists(atPath: marker.path) else { continue }
                 _ = enable(in: account.dir)

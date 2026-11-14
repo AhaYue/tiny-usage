@@ -28,8 +28,8 @@ extension LiveUsageDataSource {
     func fetchClaudeDesktopWebUsage(userInitiated: Bool, cliOrg: String?) async -> (status: ServiceStatus, sameAccount: Bool)? {
         let endpointKey = "claude-desktop-web"
         guard await EndpointBackoff.shared.remaining(endpointKey) <= 0 else { return nil }
-        guard UserDefaults.standard.bool(forKey: "ay.desktopFallbackEnabled"),
-              ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"] == nil,
+        guard UserDefaults.standard.bool(forKey: "tinyusage.desktopFallbackEnabled"),
+              ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] == nil,
               let sessionKey = readClaudeDesktopSessionKey(userInitiated: userInitiated) else {
             Self.desktopLog.log("no desktop sessionKey (silent read failed / not granted / not logged in)")
             return nil
@@ -110,8 +110,8 @@ extension LiveUsageDataSource {
     func fetchClaudeDesktopOAuthUsage() async -> ServiceStatus? {
         let endpointKey = "claude-desktop-oauth"
         guard await EndpointBackoff.shared.remaining(endpointKey) <= 0 else { return nil }
-        guard UserDefaults.standard.bool(forKey: "ay.desktopFallbackEnabled"),
-              ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"] == nil,
+        guard UserDefaults.standard.bool(forKey: "tinyusage.desktopFallbackEnabled"),
+              ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] == nil,
               let password = readClaudeSafeStoragePassword(interactive: false),
               let data = FileManager.default.contents(atPath: NSHomeDirectory() + "/Library/Application Support/Claude/config.json"),
               let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

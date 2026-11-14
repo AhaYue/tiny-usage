@@ -95,10 +95,6 @@ struct LiveUsageDataSource {
         ]
     }
 
-    /// Explains how Antigravity quota is sourced and why it may not be current. Surfaced
-    /// behind the (i) icon on the Antigravity card.
-    static let antigravityInfo = String(localized: "Quota is read from Antigravity's local language server. Antigravity must be running for live data; when it's closed, the last seen values are shown.")
-
     /// Fetch every service. Services named in `skip` are in a fetch cooldown (e.g. after a 429)
     /// and are served from their snapshot instead of hitting the network. A live fetch that times
     /// out also falls back to the snapshot, so a transient failure never empties a card.
@@ -118,7 +114,7 @@ struct LiveUsageDataSource {
                 if skip.contains("Claude") {
                     let card = self.readClaudeHookUsage(maxAge: 30 * 60).map { self.claudeCardFromHook($0) }
                         ?? self.snapshotOrFallback("Claude", iconName: "claude")
-                    let desktop = UserDefaults.standard.bool(forKey: "ay.desktopFallbackEnabled")
+                    let desktop = UserDefaults.standard.bool(forKey: "tinyusage.desktopFallbackEnabled")
                         ? self.loadSnapshot(for: Self.claudeDesktopCardName, iconName: "claude") : nil
                     return [card.withAccount(claudeMain)] + [desktop].compactMap { $0 }
                 }
@@ -185,16 +181,16 @@ struct LiveUsageDataSource {
 
     /// Where Mimir keeps its caches and snapshots.
     static var userHome: URL {
-        if let path = ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"], !path.isEmpty { return URL(fileURLWithPath: path) }
+        if let path = ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"], !path.isEmpty { return URL(fileURLWithPath: path) }
         return FileManager.default.homeDirectoryForCurrentUser
     }
 
     static var supportDirectory: URL {
-        if let path = ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"], !path.isEmpty {
-            return URL(fileURLWithPath: path).appendingPathComponent("Library/Application Support/AY Usage")
+        if let path = ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"], !path.isEmpty {
+            return URL(fileURLWithPath: path).appendingPathComponent("Library/Application Support/Tiny Usage")
         }
-        if let path = ProcessInfo.processInfo.environment["AY_USAGE_HOME"], !path.isEmpty { return URL(fileURLWithPath: path) }
-        return userHome.appendingPathComponent("Library/Application Support/AY Usage")
+        if let path = ProcessInfo.processInfo.environment["TINY_USAGE_HOME"], !path.isEmpty { return URL(fileURLWithPath: path) }
+        return userHome.appendingPathComponent("Library/Application Support/Tiny Usage")
     }
 
     func snapshotURL(for service: String) -> URL {
@@ -204,7 +200,7 @@ struct LiveUsageDataSource {
     /// Persist the last live reading of any service so it can be shown (dimmed, marked stale)
     /// when the live source later fails, instead of the card silently vanishing. Never persists
     /// an unavailable reading. Captures the two account-level windows (Claude/Codex) and/or the
-    /// per-model rows (Antigravity); every key is optional, so each service writes only what it has.
+    /// per-model rows; every key is optional, so each service writes only what it has.
     func saveSnapshot(_ status: ServiceStatus) {
         guard status.isAvailable, !status.isStale else { return }
         let hasData = status.sessionRemainingPercent != nil
@@ -329,31 +325,6 @@ struct LiveUsageDataSource {
         let id = root["accountID"] as? String, org = root["org"] as? String
         let account = plan == nil && email == nil && id == nil && org == nil ? nil : AccountInfo(plan: plan, email: email, id: id, org: org)
 
-        // Live source unreachable long enough (>4.5 h — just under the 5-hour session window, beyond
-        // which the last-known session reading is from a window that has already rotated, so it's
-        // provably stale; a shorter horizon cried wolf on normal breaks) that the snapshot can't be
-        // trusted. Only providers that map to an installable GUI app get the "couldn't fetch — open it"
-        // state, and only while that app is actually installed:
-        //   • mapped + installed     → unavailable card (keeps model labels for the empty state). It's
-        //                               `isAvailable: false` so a stale snapshot never fires a
-        //                               low/refill notification (see checkNotifications), only `isStale`
-        //                               so it still survives the popover/menu-bar/widget filters.
-        //   • mapped + NOT installed → nil → falls back to hidden (don't nag to open a missing app).
-        //   • unmapped (Claude/Codex)→ fall through to staleClassifiedCard (CLIs/APIs, nothing to open).
-        if let savedRaw = root["savedAt"] as? String, let saved = parseISO8601(savedRaw),
-           now.timeIntervalSince(saved) > 4.5 * 3600,
-           AppTarget.bundleID(for: service) != nil {
-            guard AppTarget.installedURL(for: service) != nil else { return nil }
-            return ServiceStatus(
-                name: service, iconName: iconName,
-                sessionResetAt: sessionReset, weeklyResetAt: weeklyReset,
-                sessionRemainingPercent: root["sessionRemainingPercent"] as? Int,
-                weeklyRemainingPercent: root["weeklyRemainingPercent"] as? Int,
-                weeklyWindowSeconds: weeklyWindow,
-                models: allModels, isAvailable: false, statusNote: staleNote,
-                isStale: true, dataUnavailable: true, account: account)
-        }
-
         return staleClassifiedCard(
             name: service, iconName: iconName,
             sessionPct: root["sessionRemainingPercent"] as? Int, sessionReset: sessionReset,
@@ -363,7 +334,7 @@ struct LiveUsageDataSource {
             .withAccount(account).withObservedAt((root["savedAt"] as? String).flatMap(parseISO8601))
     }
 
-    /// Standard reset periods for the quota windows all three providers expose: a 5-hour session and a
+    /// Standard reset periods for the quota windows both providers expose: a 5-hour session and a
     /// 7-day week. Used only to roll a *lapsed* last-known reset forward to the next boundary so the
     /// countdown stays meaningful (the window itself really did refill); the live fetch always carries
     /// the exact `resets_at`.
@@ -373,7 +344,7 @@ struct LiveUsageDataSource {
     /// Classify a last-known reading by reset time. A window/model still within its reset keeps its
     /// real percent; one whose reset has already passed has *refilled to full*, so it shows 100% with
     /// its reset rolled forward to the next boundary — NOT blanked (which made the session vanish and
-    /// dropped the provider from the widget) and NOT dropped (which made per-model rows like Fable
+    /// dropped the provider from the menu bar) and NOT dropped (which made per-model rows like Fable
     /// disappear). When every row is only a refilled estimate (nothing still inside its original
     /// window) the card is dimmed (`isStale`) so it reads as last-known rather than live. Returns nil
     /// only when there is no data at all.
@@ -430,13 +401,6 @@ struct LiveUsageDataSource {
             isAvailable: true,
             statusNote: anyLive ? freshNote : staleNote,
             isStale: true)
-    }
-
-    /// Antigravity keeps its original method names as thin wrappers over the generic helpers,
-    /// so its fetch chain (and the "antigravity snapshot" / "out of date" labels) is unchanged.
-    func saveAntigravitySnapshot(_ service: ServiceStatus) { saveSnapshot(service) }
-    func fetchAntigravitySnapshot() -> ServiceStatus? {
-        loadSnapshot(for: "Antigravity", iconName: "antigravity", freshNote: "antigravity snapshot")
     }
 
     /// Last-known snapshot for a service, else its hidden fallback card. Used when a fetch is

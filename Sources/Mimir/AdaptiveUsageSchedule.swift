@@ -9,7 +9,7 @@ struct AdaptiveUsageSchedule {
     }
     private var entries: [String: Entry]
     private let defaults: UserDefaults
-    private let key = "ay.usageSchedule.v1"
+    private let key = "tinyusage.usageSchedule.v1"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults

@@ -16,7 +16,7 @@ struct ServiceStatus: Identifiable {
     let models: [ModelStatus]
     let isAvailable: Bool
     let statusNote: String?
-    /// Last-known data shown because the live source is gone (e.g. Antigravity IDE closed).
+    /// Last-known data shown because the live source is gone (e.g. the live source was unreachable).
     /// Not "available", but must survive the popover's unavailable-service filter so the
     /// user still sees the snapshot instead of the service silently vanishing.
     let isStale: Bool
@@ -28,8 +28,8 @@ struct ServiceStatus: Identifiable {
     /// `> 0` = back off for that many seconds (e.g. an HTTP 429 `Retry-After`).
     let cooldownHint: TimeInterval?
     /// True when the live source has been unreachable long enough (>15 min) that the last-known data
-    /// is no longer trustworthy — the UI shows an actionable "couldn't fetch" state (small widget
-    /// message / popover banner) instead of stale numbers. The model labels are kept so
+    /// is no longer trustworthy — the UI shows an actionable "couldn't fetch" state (popover banner)
+    /// instead of stale numbers. The model labels are kept so
     /// those surfaces still know which rows to render.
     let dataUnavailable: Bool
     /// Which login this card reads — its plan and e-mail, shown under the provider's name so two
@@ -109,7 +109,7 @@ struct ServiceStatus: Identifiable {
     }
 
     /// The provider's own name — "Claude" for the second login stored as "Claude Work". `name` stays
-    /// the card's identity (snapshots, cooldowns, the widget's picker); this is what the user reads.
+    /// the card's identity (snapshots, cooldowns); this is what the user reads.
     var providerTitle: String {
         serviceDisplayOrder.first { name == $0 || name.hasPrefix("\($0) ") } ?? name
     }
@@ -171,16 +171,6 @@ struct AccountInfo: Equatable {
     /// Codex's `chatgpt_plan_type`: `plus` → "Plus", `team` → "Team".
     static func codexPlan(_ planType: String?) -> String? { planWord(planType) }
 
-    /// Antigravity's `userTier.name`: "Google AI Pro" → "Pro", the same short word Claude's and
-    /// Codex's plans read as — a family name ("Gemini") has to fit beside it.
-    static func antigravityPlan(_ tierName: String?) -> String? {
-        guard let tierName, !tierName.isEmpty else { return nil }
-        for prefix in ["Google AI ", "Google "] where tierName.hasPrefix(prefix) {
-            return String(tierName.dropFirst(prefix.count))
-        }
-        return tierName
-    }
-
     private static func planWord(_ raw: String?) -> String? {
         guard let raw, !raw.isEmpty else { return nil }
         return raw.split(separator: "_").map { $0.capitalized }.joined(separator: " ")
@@ -194,14 +184,13 @@ enum ModelWindow {
     case session
 }
 
-/// The single top→bottom display order for the three services, read by BOTH the popover cards
-/// (`PopoverView.contentView`) and the widget bridge. Keeping it in one place is
-/// load-bearing: when the two defined the order independently they drifted, and a yellow dot lined
-/// up with the wrong card. Change the order here and both move together.
-let serviceDisplayOrder = ["Claude", "Codex", "Antigravity"]
+/// The single top→bottom display order for the services, read by BOTH the popover cards
+/// (`PopoverView.contentView`) and the menu bar. Keeping it in one place is load-bearing: when
+/// the two defined the order independently they drifted, and a dot lined up with the wrong card.
+let serviceDisplayOrder = ["Claude", "Codex"]
 
 extension Array where Element == ServiceStatus {
-    /// Sorted into the canonical display order (Claude, Codex, Antigravity); unknown names last.
+    /// Sorted into the canonical display order (Claude, Codex); unknown names last.
     /// Shared by the popover's cards and its notification banner so a service can't reorder between them.
     /// A second account ("Claude Work") sits right after its provider's main card.
     func sortedByDisplayOrder() -> [ServiceStatus] {
@@ -238,24 +227,24 @@ struct ExtraAccount: Equatable {
 }
 
 /// One 5-hour session window a service exposes, paired with the weekly (7g) quota that gates it.
-/// Antigravity expands to one window per `.session` model (its weekly matched by name); Claude/Codex
-/// carry a single account-level session. This is the one source of truth for "what gates a 5h window"
-/// — shared by the menu-bar dots and the widget bridge so they can never drift apart.
+/// Claude/Codex carry a single account-level session; a provider with per-model `.session` rows
+/// expands to one window per row (its weekly matched by name). The one source of truth for "what
+/// gates a 5h window" for the menu-bar dots.
 struct SessionWindow: Equatable {
     let label: String
     let sessionPercent: Int?      // nil = no current reading
     let sessionResetAt: Date?
     let weeklyPercent: Int?
     let weeklyResetAt: Date?
-    /// Real length of the weekly window, when known — carried to the widget so it can label a
-    /// 30-day window as such instead of "7d". nil for per-model windows and unknown providers.
+    /// Real length of the weekly window, when known, so a 30-day window is labelled as such
+    /// instead of "7d". nil for per-model windows and unknown providers.
     var weeklyWindowSeconds: TimeInterval? = nil
 }
 
 extension ServiceStatus {
     var sessionWindows: [SessionWindow] {
         // A plan's extra quota (Codex's Luna Reserve) has a session row too, but it's not the
-        // account's own: taken here, it replaced Codex's session in the widget and the menu bar.
+        // account's own: taken here, it replaced Codex's session in the menu bar.
         let sessionModels = models.filter { $0.window == .session && $0.groupLabel == nil }
         if !sessionModels.isEmpty {
             return sessionModels.map { m in
@@ -266,7 +255,7 @@ extension ServiceStatus {
         }
         // No per-model sessions → the account-level session (Claude/Codex). `sessionPercent` may be
         // nil (a service visible only on its weekly reading): kept as one window so the menu bar still
-        // shows a placeholder dot, while the widget drops it (no 5h number to render).
+        // shows a placeholder dot.
         return [SessionWindow(label: name, sessionPercent: sessionRemainingPercent, sessionResetAt: sessionResetAt,
                               weeklyPercent: weeklyRemainingPercent, weeklyResetAt: weeklyResetAt,
                               weeklyWindowSeconds: weeklyWindowSeconds)]
@@ -283,7 +272,7 @@ struct ModelStatus: Identifiable {
     /// when it's below its threshold, so the menu-bar low-quota badge can trigger on it. Percentage
     /// rows leave this false and are judged by `remainingPercent` instead.
     let isLow: Bool
-    /// Weekly vs session window (Antigravity's grouped rows). `nil` for credit rows.
+    /// Weekly vs session window. `nil` for credit rows.
     let window: ModelWindow?
     /// Sub-line under a `valueText` row (e.g. "first expires in 3d" under the reset credits count).
     let caption: String?

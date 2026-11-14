@@ -24,9 +24,9 @@ final class ExtraAccountTests: XCTestCase {
             ServiceStatus(name: name, iconName: "", sessionResetAt: nil, weeklyResetAt: nil,
                           models: [], isAvailable: true, statusNote: nil)
         }
-        let sorted = [card("Antigravity"), card("Codex Work"), card("Claude Work"), card("Codex"), card("Claude")]
+        let sorted = [card("Codex Work"), card("Claude Work"), card("Codex"), card("Claude")]
             .sortedByDisplayOrder().map(\.name)
-        XCTAssertEqual(sorted, ["Claude", "Claude Work", "Codex", "Codex Work", "Antigravity"])
+        XCTAssertEqual(sorted, ["Claude", "Claude Work", "Codex", "Codex Work"])
     }
 
     func testSecondAccountRetainsDistinctStableIdentity() {

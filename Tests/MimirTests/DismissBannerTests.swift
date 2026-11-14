@@ -27,22 +27,22 @@ final class DismissBannerTests: XCTestCase {
 
     func testDismissIsRememberedAndPersisted() {
         let store = UsageStore()
-        store.dismissUnavailable("Antigravity")
-        XCTAssertTrue(store.dismissedUnavailable.contains("Antigravity"))
-        XCTAssertEqual(UserDefaults.standard.stringArray(forKey: key), ["Antigravity"])
+        store.dismissUnavailable("Claude")
+        XCTAssertTrue(store.dismissedUnavailable.contains("Claude"))
+        XCTAssertEqual(UserDefaults.standard.stringArray(forKey: key), ["Claude"])
 
         // A fresh store reads it back — the banner stays hidden across a relaunch.
-        XCTAssertTrue(UsageStore().dismissedUnavailable.contains("Antigravity"))
+        XCTAssertTrue(UsageStore().dismissedUnavailable.contains("Claude"))
     }
 
     /// The important one: once the service reports data again the dismissal is dropped, so the NEXT
     /// outage is announced instead of being silently swallowed.
     func testDismissalIsForgottenOnceTheServiceRecovers() {
         let store = UsageStore()
-        store.dismissUnavailable("Antigravity")
+        store.dismissUnavailable("Claude")
 
-        store.forgetRecoveredDismissals([service("Antigravity", down: false)])
-        XCTAssertFalse(store.dismissedUnavailable.contains("Antigravity"))
+        store.forgetRecoveredDismissals([service("Claude", down: false)])
+        XCTAssertFalse(store.dismissedUnavailable.contains("Claude"))
         XCTAssertEqual(UserDefaults.standard.stringArray(forKey: key), [])
     }
 
@@ -50,22 +50,22 @@ final class DismissBannerTests: XCTestCase {
     /// next 60-second refresh.
     func testDismissalSurvivesWhileStillDown() {
         let store = UsageStore()
-        store.dismissUnavailable("Antigravity")
+        store.dismissUnavailable("Claude")
 
-        store.forgetRecoveredDismissals([service("Antigravity", down: true)])
-        XCTAssertTrue(store.dismissedUnavailable.contains("Antigravity"))
+        store.forgetRecoveredDismissals([service("Claude", down: true)])
+        XCTAssertTrue(store.dismissedUnavailable.contains("Claude"))
     }
 
     /// Dismissals are per service: silencing one leaves another provider's banner alone.
     func testDismissalIsPerService() {
         let store = UsageStore()
-        store.dismissUnavailable("Antigravity")
+        store.dismissUnavailable("Claude")
         store.dismissUnavailable("Codex")
 
         store.forgetRecoveredDismissals([
-            service("Antigravity", down: true), service("Codex", down: false),
+            service("Claude", down: true), service("Codex", down: false),
         ])
-        XCTAssertEqual(store.dismissedUnavailable, ["Antigravity"])
+        XCTAssertEqual(store.dismissedUnavailable, ["Claude"])
     }
 }
 

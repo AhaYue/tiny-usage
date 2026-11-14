@@ -1,7 +1,7 @@
 import XCTest
 @testable import Mimir
 
-final class AYUsageRegressionTests: XCTestCase {
+final class TinyUsageRegressionTests: XCTestCase {
     func testResetGrantsKeepModelScopeAndIndependentExpiries() {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         let f = ISO8601DateFormatter()
@@ -15,7 +15,7 @@ final class AYUsageRegressionTests: XCTestCase {
         XCTAssertEqual(rows.last?.resetAt, now.addingTimeInterval(864000))
     }
     func testSupplementaryEndpointCooldownSurvivesRestart() async throws {
-        let suite = "ay.backoff.test.\(UUID().uuidString)"
+        let suite = "tinyusage.backoff.test.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let now = Date(timeIntervalSince1970: 1_800_000_000)
@@ -29,7 +29,7 @@ final class AYUsageRegressionTests: XCTestCase {
         XCTAssertEqual(unrelated, 0)
     }
     func testChangedQuotaRestoresFastRefreshAfterIdleBackoff() throws {
-        let suite = "ay.schedule.test.\(UUID().uuidString)"
+        let suite = "tinyusage.schedule.test.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         var schedule = AdaptiveUsageSchedule(defaults: defaults)

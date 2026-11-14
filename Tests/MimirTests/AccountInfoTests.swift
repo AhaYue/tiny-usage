@@ -1,6 +1,5 @@
 import XCTest
 @testable import Mimir
-import MimirShared
 
 /// Which login a card reads: its plan and e-mail, Claude.app matched to Claude Code's organization,
 /// and one card per login however many sources reach it.
@@ -12,9 +11,6 @@ final class AccountInfoTests: XCTestCase {
         XCTAssertNil(AccountInfo.claudePlan(nil))
         XCTAssertEqual(AccountInfo.codexPlan("plus"), "Plus")
         XCTAssertEqual(AccountInfo.codexPlan("team"), "Team")
-        XCTAssertEqual(AccountInfo.antigravityPlan("Google AI Pro"), "Pro")
-        XCTAssertEqual(AccountInfo.antigravityPlan("Google One"), "One")
-        XCTAssertNil(AccountInfo.antigravityPlan(""))
     }
 
     func testClaudeProfileNamesTheLogin() {
@@ -71,15 +67,6 @@ final class AccountInfoTests: XCTestCase {
         XCTAssertEqual(kept.map(\.0.name), ["Codex Work", "Codex Unknown"])
     }
 
-    func testAntigravityUserStatusNamesTheLogin() {
-        let info = LiveUsageDataSource.antigravityAccount([
-            "email": "me@gmail.com", "userTier": ["id": "g1-pro-tier", "name": "Google AI Pro"],
-        ])
-        XCTAssertEqual(info?.plan, "Pro")
-        XCTAssertEqual(info?.email, "me@gmail.com")
-        XCTAssertNil(LiveUsageDataSource.antigravityAccount([:]))
-    }
-
     func testCardTitleIsTheProviderAndTheSourceKeepsItsAccount() {
         let card = ServiceStatus(name: "Claude Work", iconName: "claude", sessionResetAt: nil, weeklyResetAt: nil,
                                  models: [], isAvailable: true, statusNote: nil,
@@ -91,21 +78,5 @@ final class AccountInfoTests: XCTestCase {
         XCTAssertEqual(ServiceStatus(name: "Codex", iconName: "codex", sessionResetAt: nil, weeklyResetAt: nil,
                                      models: [], isAvailable: true, statusNote: nil)
                         .withAccount(AccountInfo(email: "me@gmail.com")).titleWithAccount, "Codex (me@gmail.com)")
-    }
-}
-
-final class WidgetAccountTests: XCTestCase {
-    func testWidgetNamesTheProviderAndReadsOldPayloads() throws {
-        let p = ProviderPayload(name: "Claude Work", iconName: "claude", isAvailable: true,
-                                fiveHour: [WindowMetric(label: "Claude Work", percent: 50, resetAt: nil)],
-                                title: "Claude", plan: "Team", email: "me@work.com")
-        XCTAssertEqual(p.displayLabel(p.fiveHour[0]), "Claude")
-        XCTAssertEqual(p.displayLabel(WindowMetric(label: "Gemini", percent: 1, resetAt: nil)), "Gemini")
-
-        // A payload an older app wrote has no title/plan/email: it still decodes, label as before.
-        let old = #"{"name":"Codex","iconName":"codex","isAvailable":true,"fiveHour":[{"label":"Codex","percent":9}]}"#
-        let decoded = try JSONDecoder().decode(ProviderPayload.self, from: Data(old.utf8))
-        XCTAssertNil(decoded.email)
-        XCTAssertEqual(decoded.displayLabel(decoded.fiveHour[0]), "Codex")
     }
 }

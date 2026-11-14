@@ -2,20 +2,18 @@
 import PackageDescription
 
 let package = Package(
-    name: "AYUsage",
+    name: "TinyUsage",
     defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "AYUsage", targets: ["Mimir"]),
-        .executable(name: "AYUsageCapture", targets: ["AYUsageCapture"])
+        .executable(name: "TinyUsage", targets: ["Mimir"]),
+        .executable(name: "TinyUsageCapture", targets: ["TinyUsageCapture"])
     ],
     dependencies: [],
     targets: [
-        .target(name: "MimirShared"),
-        .executableTarget(name: "AYUsageCapture"),
+        .executableTarget(name: "TinyUsageCapture"),
         .executableTarget(
             name: "Mimir",
-            dependencies: ["MimirShared"],
             exclude: ["Mimir.entitlements"],
             resources: [.copy("Resources")]
         ),

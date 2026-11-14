@@ -27,7 +27,6 @@
 "Loading..." = "Yükleniyor...";
 
 /* Empty state */
-"No active services detected.\nMake sure Claude Code, Codex, or Antigravity is running." = "Aktif servis bulunamadı.\nClaude Code, Codex veya Antigravity'nin çalıştığından emin ol.";
 
 /* Update */
 "Check for updates" = "Güncellemeleri denetle";
@@ -59,28 +58,15 @@
 "token expired — open Claude Code" = "token süresi doldu — Claude Code'u aç";
 "claude token missing" = "Claude token'ı bulunamadı";
 "open Mimir to refresh Claude" = "Claude'u yenilemek için Mimir'i aç";
-"open Antigravity or Cockpit" = "Antigravity veya Cockpit'i aç";
 "no local source" = "yerel kaynak yok";
 
 /* Credit / billing labels */
 "Unlimited" = "Sınırsız";
 "%@ credits" = "%@ kredi";
 
-/* Antigravity info */
-"Quota is read from Antigravity's local language server. Antigravity must be running for live data; when it's closed, the last seen values are shown." = "Kota, Antigravity'nin yerel dil sunucusundan okunur. Canlı veri için Antigravity'nin açık olması gerekir; kapalıyken son görülen değerler gösterilir.";
 
-/* Widgets */
-"widget.detailed.description" = "Bakışta yapay zekâ kotası.";
-"widget.window.fiveHour" = "5s";
-"widget.window.weekly" = "7g";
-"widget.unavailable.title" = "Veri alınamadı";
-"widget.unavailable.app" = "%@ kapalı görünüyor";
-"widget.unavailable.action" = "Açmak için dokun";
 "popover.unavailable" = "%@ verisi alınamadı — açmak için dokun";
 "popover.unavailable.dismiss" = "Bu uyarıyı gizle";
-"widget.empty" = "Kotayı yüklemek için Mimir'i aç.";
-"widget.config.model" = "Model";
-"widget.config.description" = "Widget'ın hangi modeli göstereceğini seç.";
 
 /* Status menu */
 "Send anonymous statistics" = "Anonim istatistik gönder";

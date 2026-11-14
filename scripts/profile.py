@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sample an explicitly selected AYUsage process. Run with python3 -I."""
+"""Sample an explicitly selected TinyUsage process. Run with python3 -I."""
 import argparse
 import datetime
 import json
@@ -13,8 +13,8 @@ parser.add_argument("output", type=pathlib.Path)
 parser.add_argument("--seconds", type=int, default=30)
 args = parser.parse_args()
 command = subprocess.check_output(["ps", "-p", str(args.pid), "-o", "comm="], text=True).strip()
-if not command.endswith("/AYUsage"):
-    raise SystemExit("The selected process is not AYUsage")
+if not command.endswith("/TinyUsage"):
+    raise SystemExit("The selected process is not TinyUsage")
 seconds = max(5, min(300, args.seconds))
 samples = []
 started = time.monotonic()

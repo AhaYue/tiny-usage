@@ -1,5 +1,4 @@
 import AppKit
-import MimirShared
 import SwiftUI
 
 struct PopoverView: View {
@@ -97,8 +96,8 @@ struct PopoverView: View {
     }
 
     /// Show live services and stale snapshots; hide services that have no data at all.
-    /// A stale Antigravity snapshot (isStale) survives the filter so the user still sees
-    /// the last-known reading when the IDE is closed, instead of the card vanishing.
+    /// A stale snapshot (isStale) survives the filter so the user still sees the last-known
+    /// reading instead of the card vanishing.
     @ViewBuilder
     private func contentView(now: Date) -> some View {
         // Shared with the menu-bar dots so a dot can never line up with the wrong card.
@@ -145,9 +144,6 @@ struct PopoverView: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Color.primary.opacity(0.7))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                            .onTapGesture { AppTarget.open(svc.name) }
-                            .pointingHandCursor()
                         // Dismissing is per-service and lasts only until that service reports data
                         // again (see UsageStore.forgetRecoveredDismissals), so hiding this notice
                         // can't permanently mute a provider that is genuinely broken.
@@ -254,7 +250,7 @@ struct SettingsFace: View {
             BrandingHeader(onGear: onBack, closing: true)
 
             VStack(spacing: 0) {
-                row("power", "登录时启动", "登录后自动打开 AY Usage。",
+                row("power", "登录时启动", "登录后自动打开 Tiny Usage。",
                     checked: flags.launchAtLogin, action: settings.toggleLaunchAtLogin)
                 row("lock.open", "Claude 免提示读取", "通过 Claude Code hook 读取用量。",
                     checked: flags.claudeHook, action: settings.toggleClaudeHook)
@@ -273,7 +269,7 @@ struct SettingsFace: View {
                 row("key", "授权凭据", nil, action: settings.authorizeCredentials)
                 row("arrow.clockwise", "刷新用量", nil, action: settings.refresh)
                 row("folder", "打开数据文件夹", nil, action: settings.openDataFolder)
-                row("xmark.circle", "退出 AY Usage", nil,
+                row("xmark.circle", "退出 Tiny Usage", nil,
                     shortcut: "⌘Q", action: settings.quit)
             }
             .padding(.vertical, 4)
@@ -388,7 +384,7 @@ struct MilowdaMark: View {
 
     var body: some View {
         HStack {
-            Text("AY Usage \(version)")
+            Text("Tiny Usage \(version)")
                 .font(.system(size: 10, weight: .medium).monospacedDigit())
                 .foregroundStyle(Color.primary.opacity(0.5))
             Spacer(minLength: 0)
@@ -421,7 +417,7 @@ struct BrandingHeader: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            Text("AY Usage")
+            Text("Tiny Usage")
             .font(.system(size: 15, weight: .medium))
             .foregroundStyle(Color.primary.opacity(0.55))
             .animation(.easeOut(duration: 0.25), value: refreshing)
@@ -582,11 +578,9 @@ struct PopoverBackdrop: View {
     }
 }
 
-/// One provider = one card. The card is the widget: each quota pair is drawn as the medium
-/// widget's face — the five-hour window tints that share of the panel from the left, its number
-/// sits top right with the reset clock and countdown, and the long window rides a capsule below.
-/// Popover and widget then say the same thing the same way. A provider with independent families
-/// (Antigravity) gets one panel per family; everyone else gets one.
+/// One provider = one card. Each quota pair is drawn as a panel: the five-hour window tints that
+/// share of the panel from the left, its number sits top right with the reset clock and countdown,
+/// and the long window rides a capsule below.
 ///
 /// Under the panels: the renewal passes as a single chip that opens into its own list, then the
 /// money and balance rows, which are always visible — they're short, they're one per provider, and
@@ -735,9 +729,8 @@ struct ServiceCard: View {
 
     // MARK: Data shaping
 
-    /// One panel per quota pair. Antigravity's families are independent quotas that happen to
-    /// share an account, so each gets its own panel under its own name; every other provider has
-    /// exactly one pair and so exactly one panel.
+    /// One panel per quota pair: the provider's own, plus one for each extra limit beside it
+    /// (Codex's Luna Reserve).
     private var panels: [PanelData] {
         var panels = quotaPanels
         for i in panels.indices { panels[i].stale = service.isStale }
@@ -751,16 +744,7 @@ struct ServiceCard: View {
     }
 
     private var quotaPanels: [PanelData] {
-        guard hasServiceQuotas else {
-            return antigravityPanelFamilies.map { family in
-                PanelData(title: family.name, iconName: service.iconName,
-                          session: family.session.map { ($0.percent, $0.resetAt) },
-                          weekly: family.weekly.map { ($0.percent, $0.resetAt) },
-                          weeklyLabel: "7\(TimeFormatter.dayUnit)",
-                          sessionFallback: 5 * 3600, weeklyWindow: 7 * 86_400,
-                          gated: family.weekly?.percent == 0)
-            }
-        }
+        guard hasServiceQuotas else { return [] }
         return [PanelData(title: service.providerTitle, iconName: service.iconName,
                           session: service.sessionRemainingPercent.map { ($0, service.sessionResetAt) },
                           weekly: service.weeklyRemainingPercent.map { ($0, service.weeklyResetAt) },
@@ -769,7 +753,7 @@ struct ServiceCard: View {
                           weeklyWindow: service.weeklyWindowSeconds ?? 7 * 86_400,
                           gated: service.weeklyRemainingPercent == 0 && service.sessionRemainingPercent != nil)]
             // A quota beside the plan's own (Codex's Luna Reserve) is a quota in its own right, so it
-            // gets its own panel under its own name — the same treatment as an Antigravity family.
+            // gets its own panel under its own name.
             + families(in: service.models.filter { $0.groupLabel == LiveUsageDataSource.codexExtraLimitGroup })
                 .map { family in
                     PanelData(title: family.name, iconName: service.iconName,
@@ -800,31 +784,12 @@ struct ServiceCard: View {
         service.models.filter { $0.valueText != nil && $0.groupLabel != String(localized: "Renewal credit") }
     }
 
-    /// Antigravity grouped by family, preserving first-seen order, each family carrying
-    /// its own session (5h) and weekly (7g) so they render together.
-    private var antigravityFamilies: [(name: String, session: (percent: Int, resetAt: Date?)?, weekly: (percent: Int, resetAt: Date?)?)] {
-        families(in: service.models)
-    }
-
-    /// The families that get a panel: those with a five-hour window. A weekly-only family is one
-    /// model's own cap and goes to a chip — unless no family has a session, when all stay panels.
-    private var antigravityPanelFamilies: [(name: String, session: (percent: Int, resetAt: Date?)?, weekly: (percent: Int, resetAt: Date?)?)] {
-        let withSession = antigravityFamilies.filter { $0.session != nil }
-        return withSession.isEmpty ? antigravityFamilies : withSession
-    }
-
-    /// Weekly caps on a single model (Claude's Fable, Antigravity's Gemini 4 Argon). They only bite
+    /// Weekly caps on a single model (Claude's Fable). They only bite
     /// when you pick that model, so each rides a chip under the panels instead of claiming one.
     private var modelLimitRows: [(name: String, percent: Int, resetAt: Date?)] {
-        if hasServiceQuotas {
-            return service.models.filter { $0.valueText == nil && $0.groupLabel == nil }
-                .map { ($0.name, $0.remainingPercent, $0.resetAt) }
-        }
-        let panelNames = Set(antigravityPanelFamilies.map(\.name))
-        return antigravityFamilies.compactMap { family in
-            guard !panelNames.contains(family.name), let weekly = family.weekly else { return nil }
-            return (family.name, weekly.percent, weekly.resetAt)
-        }
+        guard hasServiceQuotas else { return [] }
+        return service.models.filter { $0.valueText == nil && $0.groupLabel == nil }
+            .map { ($0.name, $0.remainingPercent, $0.resetAt) }
     }
 
     /// Rows grouped by name into session/weekly pairs, in the order they first appear.
@@ -842,8 +807,7 @@ struct ServiceCard: View {
         return order.map { (name: $0, session: bag[$0]?.session ?? nil, weekly: bag[$0]?.weekly ?? nil) }
     }
 
-    /// True when the provider reports account-level windows (Claude/Codex) rather than per-family
-    /// ones (Antigravity).
+    /// True when the provider reports account-level windows (Claude/Codex).
     private var hasServiceQuotas: Bool {
         service.sessionRemainingPercent != nil || service.weeklyRemainingPercent != nil
     }
@@ -889,13 +853,10 @@ struct PanelData {
     }
 }
 
-/// The medium widget, shrunk to fit a card. The panel's face IS the five-hour gauge: what's left
+/// One quota panel. The panel's face IS the five-hour gauge: what's left
 /// of that window tints the same share of the panel from the left, so the reading is the shape of
 /// the thing, not a bar next to it. Its number sits top right with the reset clock above the
 /// countdown; the long window runs along the bottom as a capsule carrying its own percent.
-///
-/// Deliberately the same geometry as `DetailedWidget`'s medium size — a user who has both on
-/// screen should not have to learn two pictures of one quota.
 struct ProviderPanel: View {
     let panel: PanelData
     let now: Date
@@ -1019,7 +980,6 @@ struct ProviderPanel: View {
 
 }
 
-// Color(hex:) now lives in MimirShared (shared with the widget); imported via `import MimirShared`.
 
 func clampPct(_ percent: Int) -> Int { max(0, min(100, percent)) }
 
@@ -1061,7 +1021,7 @@ struct QuotaLine: View {
     /// Chosen from what's *left*, whichever number is shown — 90% used is red either way.
     let color: Color
     /// The "显示数值" setting, shared with the menu bar; observed so a change applies at once.
-    @AppStorage("ay.showRemaining") private var showRemaining = true
+    @AppStorage("tinyusage.showRemaining") private var showRemaining = true
 
     var body: some View {
         let value = showRemaining ? clampPct(percent) : 100 - clampPct(percent)

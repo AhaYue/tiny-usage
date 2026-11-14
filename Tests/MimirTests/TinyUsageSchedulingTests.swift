@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import Mimir
 
-final class AYUsageSchedulingTests: XCTestCase {
+final class TinyUsageSchedulingTests: XCTestCase {
     func testRetryAfterAndPersistedCooldown() throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         XCTAssertEqual(AdaptiveUsageSchedule.retryAfter("120", now: now), 120)
@@ -11,7 +11,7 @@ final class AYUsageSchedulingTests: XCTestCase {
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
         XCTAssertEqual(AdaptiveUsageSchedule.retryAfter(formatter.string(from: now.addingTimeInterval(300)), now: now), 300)
-        let suite = "ay.tests.\(UUID().uuidString)"
+        let suite = "tinyusage.tests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         var schedule = AdaptiveUsageSchedule(defaults: defaults)
@@ -71,7 +71,7 @@ final class AYUsageSchedulingTests: XCTestCase {
     }
 
     func testSlowRefreshModeIsNeverUndercutByChangedDataOrResets() throws {
-        let suite = "ay.schedule.mode.\(UUID().uuidString)"
+        let suite = "tinyusage.schedule.mode.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         var schedule = AdaptiveUsageSchedule(defaults: defaults)

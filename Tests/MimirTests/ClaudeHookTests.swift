@@ -109,12 +109,12 @@ final class ClaudeHookTests: XCTestCase {
     // MARK: - Real installation into isolated fixture directories
 
     private func fixture(_ body: (URL) throws -> Void) throws {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("ay hook 'space \(UUID().uuidString)")
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("tiny-usage hook 'space \(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let previous = ProcessInfo.processInfo.environment["AY_USAGE_HOME"]
-        setenv("AY_USAGE_HOME", directory.appendingPathComponent("state").path, 1)
+        let previous = ProcessInfo.processInfo.environment["TINY_USAGE_HOME"]
+        setenv("TINY_USAGE_HOME", directory.appendingPathComponent("state").path, 1)
         defer {
-            if let previous { setenv("AY_USAGE_HOME", previous, 1) } else { unsetenv("AY_USAGE_HOME") }
+            if let previous { setenv("TINY_USAGE_HOME", previous, 1) } else { unsetenv("TINY_USAGE_HOME") }
             try? FileManager.default.removeItem(at: directory)
         }
         try body(directory)
@@ -151,7 +151,7 @@ final class ClaudeHookTests: XCTestCase {
             try changed.write(to: url)
             guard case .failed = MimirStatusLineHook.disable(in: directory) else { return XCTFail("Expected conflict") }
             XCTAssertEqual(try Data(contentsOf: url), changed)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: directory.appendingPathComponent("ay-usage-statusline.sh").path))
+            XCTAssertTrue(FileManager.default.fileExists(atPath: directory.appendingPathComponent("tiny-usage-statusline.sh").path))
         }
     }
 
@@ -172,8 +172,8 @@ final class ClaudeHookTests: XCTestCase {
     func testCaptureForwardsExactStdinAndOnlyPersistsQuota() throws {
         try fixture { directory in
             let package = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            let helper = package.appendingPathComponent(".build/debug/AYUsageCapture")
-            try XCTSkipIf(!FileManager.default.isExecutableFile(atPath: helper.path), "Build AYUsageCapture before integration test")
+            let helper = package.appendingPathComponent(".build/debug/TinyUsageCapture")
+            try XCTSkipIf(!FileManager.default.isExecutableFile(atPath: helper.path), "Build TinyUsageCapture before integration test")
             let output = directory.appendingPathComponent("quota.json")
             let bytes = Data("{\"rate_limits\":{\"five_hour\":{\"used_percentage\":17,\"resets_at\":2000000000}},\"workspace\":\"do-not-store\"}\n\n".utf8)
             let process = Process()

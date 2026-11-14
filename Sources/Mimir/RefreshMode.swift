@@ -1,12 +1,12 @@
 import Foundation
 
-/// How eagerly AY Usage reads local files and asks the network. One setting for both, because
+/// How eagerly Tiny Usage reads local files and asks the network. One setting for both, because
 /// "I don't need it fast" means both. Redrawing the menu bar (countdown, time cursor) is not part
 /// of it — that's an in-memory draw, no I/O — so it keeps its one-minute tick in every mode.
 enum RefreshMode: Int, CaseIterable {
     case auto, every5, every15, every30, manual
 
-    static let defaultsKey = "ay.refreshMode"
+    static let defaultsKey = "tinyusage.refreshMode"
 
     static var current: RefreshMode {
         RefreshMode(rawValue: UserDefaults.standard.integer(forKey: defaultsKey)) ?? .auto

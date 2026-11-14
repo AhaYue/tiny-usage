@@ -44,7 +44,7 @@ enum PreviewRenderer {
         for dark in [true, false] {
             let content = VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("AY Usage").font(.system(size: 22, weight: .semibold))
+                    Text("Tiny Usage").font(.system(size: 22, weight: .semibold))
                     Spacer()
                     Text("演示预览").font(.caption).foregroundStyle(.secondary)
                 }

@@ -1,6 +1,6 @@
 # 性能记录
 
-2026-11-13 在本机（Apple Silicon，macOS 26）对 `dist/AY Usage.app` 的 release arm64 构建做的短时测量。原始数据在 [`runtime/`](runtime/)。
+2026-11-13 在本机（Apple Silicon，macOS 26）对 `dist/Tiny Usage.app` 的 release arm64 构建做的短时测量。原始数据在 [`runtime/`](runtime/)。
 
 > 这些都是几十秒的单次采样，只能说明“当时没有明显问题”，不代表长期稳定性，也不是不同机器之间的可比基准。
 
@@ -25,12 +25,12 @@ App 包体积 9.4 MiB，没有第三方动态库依赖。
 
 ```sh
 # 正常启动 App，关闭面板后：
-pgrep -x AYUsage
+pgrep -x TinyUsage
 python3 -I scripts/profile.py <PID> docs/runtime/performance-idle.json   # 默认 30 秒，5 秒一次
 vmmap -summary <PID> > docs/runtime/memory-idle.txt
 ```
 
-`profile.py` 只读 `ps` 输出，会先确认目标进程是 `AYUsage` 才采样。
+`profile.py` 只读 `ps` 输出，会先确认目标进程是 `TinyUsage` 才采样。
 
 ## 没测的
 

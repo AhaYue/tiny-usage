@@ -22,12 +22,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastAutoRefresh: Date?
     private let demo = CommandLine.arguments.contains("--demo") || CommandLine.arguments.contains("--render-preview") || CommandLine.arguments.contains("--smoke-test")
     private var style: MenuBarRenderer.Style {
-        MenuBarRenderer.Style(rawValue: UserDefaults.standard.integer(forKey: "ay.menuStyle")) ?? .bars
+        MenuBarRenderer.Style(rawValue: UserDefaults.standard.integer(forKey: "tinyusage.menuStyle")) ?? .bars
     }
-    private var remaining: Bool { UserDefaults.standard.bool(forKey: "ay.showRemaining") }
+    private var remaining: Bool { UserDefaults.standard.bool(forKey: "tinyusage.showRemaining") }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        UserDefaults.standard.register(defaults: ["ay.showRemaining": true, "ay.menuStyle": 0])
+        UserDefaults.standard.register(defaults: ["tinyusage.showRemaining": true, "tinyusage.menuStyle": 0])
         NSApp.setActivationPolicy(.accessory)
         if demo { store.services = DemoData.services() }
         if let index = CommandLine.arguments.firstIndex(of: "--render-preview"),
@@ -90,7 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.scheme == "ayusage" {
+        for url in urls where url.scheme == "tinyusage" {
             switch url.host {
             case "hide": hidePanel()
             case "toggle-display": toggleRemaining()
@@ -116,7 +116,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         button.image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: Date())
         button.imagePosition = .imageOnly
-        button.toolTip = "AY Usage\n" + MenuBarRenderer.tooltip(services: store.services, remaining: remaining)
+        button.toolTip = "Tiny Usage\n" + MenuBarRenderer.tooltip(services: store.services, remaining: remaining)
         button.setAccessibilityLabel(button.toolTip)
     }
 
@@ -188,15 +188,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             toggleLaunchAtLogin: { [weak self] in self?.toggleLogin() },
             claudeHook: { MimirStatusLineHook.isWired() },
             toggleClaudeHook: { [weak self] in self?.toggleHook() },
-            desktopFallback: { UserDefaults.standard.bool(forKey: "ay.desktopFallbackEnabled") },
+            desktopFallback: { UserDefaults.standard.bool(forKey: "tinyusage.desktopFallbackEnabled") },
             toggleDesktopFallback: { [weak self] in
-                UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: "ay.desktopFallbackEnabled"), forKey: "ay.desktopFallbackEnabled")
+                UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: "tinyusage.desktopFallbackEnabled"), forKey: "tinyusage.desktopFallbackEnabled")
                 if self?.demo == false, RefreshMode.current != .manual { self?.lastAutoRefresh = Date(); self?.store.refresh() }
             },
             showRemaining: { [weak self] in self?.remaining ?? true },
-            setShowRemaining: { [weak self] in UserDefaults.standard.set($0, forKey: "ay.showRemaining"); self?.renderTitle() },
+            setShowRemaining: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.showRemaining"); self?.renderTitle() },
             menuStyle: { [weak self] in self?.style.rawValue ?? 0 },
-            setMenuStyle: { [weak self] in UserDefaults.standard.set($0, forKey: "ay.menuStyle"); self?.renderTitle() },
+            setMenuStyle: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.menuStyle"); self?.renderTitle() },
             refreshMode: { RefreshMode.current.rawValue },
             setRefreshMode: { UserDefaults.standard.set($0, forKey: RefreshMode.defaultsKey) },
             authorizeCredentials: { [weak self] in if self?.demo == false { self?.store.refresh(userInitiated: true, force: true) } },
@@ -226,7 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let result = MimirStatusLineHook.isWired() ? MimirStatusLineHook.disable() : MimirStatusLineHook.enable()
         switch result {
         case .failed(let message): alert("状态栏采集未更改", message)
-        case .alreadyOn: alert("已存在采集配置", "如果已安装 Mimir hook，AY Usage 会直接读取它，无需重复注入。")
+        case .alreadyOn: alert("已存在采集配置", "如果已安装 Mimir hook，Tiny Usage 会直接读取它，无需重复注入。")
         case .enabled, .chained: alert("已启用本地配额采集", "原状态栏会继续运行。Claude Code 下次更新状态栏后会出现配额；可在此关闭并恢复原配置。")
         case .disabled: break
         }
@@ -284,20 +284,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleRemaining() {
-        UserDefaults.standard.set(!remaining, forKey: "ay.showRemaining")
+        UserDefaults.standard.set(!remaining, forKey: "tinyusage.showRemaining")
         renderTitle()
     }
     @objc private func cycleStyle() {
-        UserDefaults.standard.set((style.rawValue + 1) % MenuBarRenderer.Style.allCases.count, forKey: "ay.menuStyle")
+        UserDefaults.standard.set((style.rawValue + 1) % MenuBarRenderer.Style.allCases.count, forKey: "tinyusage.menuStyle")
         renderTitle()
     }
     @objc private func refreshNow() { if !demo { store.refresh(force: true) } }
     @objc private func quit() { NSApp.terminate(nil) }
     private func showContextMenu() {
         let menu = NSMenu()
-        for (title, action) in [("打开 AY Usage", #selector(togglePanel)), ("刷新配额", #selector(refreshNow)),
+        for (title, action) in [("打开 Tiny Usage", #selector(togglePanel)), ("刷新配额", #selector(refreshNow)),
                                 (remaining ? "切换为已用量" : "切换为剩余量", #selector(toggleRemaining)),
-                                ("菜单栏样式：\(style.label)", #selector(cycleStyle)), ("退出 AY Usage", #selector(quit))] {
+                                ("菜单栏样式：\(style.label)", #selector(cycleStyle)), ("退出 Tiny Usage", #selector(quit))] {
             let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
             item.target = self
             menu.addItem(item)

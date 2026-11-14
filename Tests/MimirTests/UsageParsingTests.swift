@@ -1,5 +1,4 @@
 import XCTest
-import MimirShared
 @testable import Mimir
 
 /// Covers the pure parsing/math helpers in LiveUsageDataSource — the fragile, reverse-engineered
@@ -393,7 +392,7 @@ final class UsageParsingTests: XCTestCase {
 
     /// Right after a 5-hour boundary the API briefly returns a `five_hour` reset that has already
     /// passed (the old window's). Live data must keep the session — it's authoritative — otherwise
-    /// Claude's card and widget vanish for a few minutes. Stale fallbacks still blank a lapsed window.
+    /// Claude's card vanishes for a few minutes. Stale fallbacks still blank a lapsed window.
     func testLiveClaudeKeepsSessionWhenResetJustLapsed() {
         let root: [String: Any] = [
             "five_hour": ["utilization": 7.0, "resets_at": "2020-01-01T00:00:00Z"],   // long past
@@ -406,7 +405,7 @@ final class UsageParsingTests: XCTestCase {
         XCTAssertTrue(live.isAvailable)
 
         // Stale fallback: a window whose reset has passed has refilled to full, so it shows 100% (not
-        // a blank that would make the session vanish from the card and drop it from the widget); the
+        // a blank that would make the session vanish from the card and drop it from the menu bar); the
         // weekly (future reset) keeps its real number. The card stays present and available.
         let stale = ds.buildClaudeStatus(from: root, note: "snapshot", live: false)
         XCTAssertNil(stale.sessionRemainingPercent)

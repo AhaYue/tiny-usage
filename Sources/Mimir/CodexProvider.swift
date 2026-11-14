@@ -159,7 +159,7 @@ extension LiveUsageDataSource {
         var req = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/usage")!, timeoutInterval: 10)
         req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        req.setValue("AYUsage/0.1", forHTTPHeaderField: "User-Agent")
+        req.setValue("TinyUsage/0.1", forHTTPHeaderField: "User-Agent")
         if let accountID, !accountID.isEmpty {
             req.setValue(accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
         }
@@ -194,7 +194,7 @@ extension LiveUsageDataSource {
     nonisolated(unsafe) private static var lastCodexShape = ""
 
     private static func recordCodexShape(_ root: [String: Any]) {
-        guard ProcessInfo.processInfo.environment["AY_USAGE_DEBUG_CODEX_SHAPE"] == "1" else { return }
+        guard ProcessInfo.processInfo.environment["TINY_USAGE_DEBUG_CODEX_SHAPE"] == "1" else { return }
         var lines: [String] = []
         func walk(_ value: Any, _ path: String) {
             switch value {
@@ -375,7 +375,7 @@ extension LiveUsageDataSource {
                              timeoutInterval: 10)
         req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        req.setValue("AYUsage/0.1", forHTTPHeaderField: "User-Agent")
+        req.setValue("TinyUsage/0.1", forHTTPHeaderField: "User-Agent")
         if let accountID, !accountID.isEmpty {
             req.setValue(accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
         }
@@ -429,7 +429,7 @@ extension LiveUsageDataSource {
             // A second login reads only its own dir — never fall back to the main account's token.
             paths.append(codexHomeDir.appendingPathComponent("auth.json"))
         } else {
-            if ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"] == nil, let codexHome = ProcessInfo.processInfo.environment["CODEX_HOME"],
+            if ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] == nil, let codexHome = ProcessInfo.processInfo.environment["CODEX_HOME"],
                !codexHome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 paths.append(URL(fileURLWithPath: codexHome).appendingPathComponent("auth.json"))
             }

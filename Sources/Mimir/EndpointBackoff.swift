@@ -5,7 +5,7 @@ import Foundation
 actor EndpointBackoff {
     static let shared = EndpointBackoff()
     private let defaults: UserDefaults
-    private let storageKey = "ay.endpointBackoff.v1"
+    private let storageKey = "tinyusage.endpointBackoff.v1"
     private var until: [String: Date]
 
     init(suiteName: String? = nil) {

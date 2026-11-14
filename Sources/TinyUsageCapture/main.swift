@@ -22,7 +22,7 @@ if let output = argument("--output"), let limits = root?["rate_limits"] as? [Str
     if !filtered.isEmpty {
         let payload: [String: Any] = ["rate_limits": filtered, "captured_at": Date().timeIntervalSince1970]
         let target = URL(fileURLWithPath: output)
-        let temporary = target.deletingLastPathComponent().appendingPathComponent(".ay-quota-\(UUID().uuidString).tmp")
+        let temporary = target.deletingLastPathComponent().appendingPathComponent(".tiny-usage-quota-\(UUID().uuidString).tmp")
         if let data = try? JSONSerialization.data(withJSONObject: payload),
            FileManager.default.createFile(atPath: temporary.path, contents: data, attributes: [.posixPermissions: 0o600]) {
             if rename(temporary.path, target.path) != 0 { try? FileManager.default.removeItem(at: temporary) }
@@ -54,5 +54,5 @@ if let previous = argument("--previous"), !previous.isEmpty {
         guard let raw, raw.isFinite else { return nil }
         return "\(label) 剩余 \(Int(max(0, min(100, 100 - raw)).rounded()))%"
     }
-    if !values.isEmpty { print("AY Usage  " + values.joined(separator: " · ")) }
+    if !values.isEmpty { print("Tiny Usage  " + values.joined(separator: " · ")) }
 }

@@ -27,7 +27,6 @@
 "Loading..." = "Loading...";
 
 /* Empty state */
-"No active services detected.\nMake sure Claude Code, Codex, or Antigravity is running." = "No active services detected.\nMake sure Claude Code, Codex, or Antigravity is running.";
 
 /* Update */
 "Check for updates" = "Check for updates";
@@ -59,28 +58,15 @@
 "token expired — open Claude Code" = "token expired — open Claude Code";
 "claude token missing" = "claude token missing";
 "open Mimir to refresh Claude" = "open Mimir to refresh Claude";
-"open Antigravity or Cockpit" = "open Antigravity or Cockpit";
 "no local source" = "no local source";
 
 /* Credit / billing labels */
 "Unlimited" = "Unlimited";
 "%@ credits" = "%@ credits";
 
-/* Antigravity info */
-"Quota is read from Antigravity's local language server. Antigravity must be running for live data; when it's closed, the last seen values are shown." = "Quota is read from Antigravity's local language server. Antigravity must be running for live data; when it's closed, the last seen values are shown.";
 
-/* Widgets */
-"widget.detailed.description" = "AI quota at a glance.";
-"widget.window.fiveHour" = "5h";
-"widget.window.weekly" = "7d";
-"widget.unavailable.title" = "Data unavailable";
-"widget.unavailable.app" = "%@ appears to be closed";
-"widget.unavailable.action" = "Tap to open";
 "popover.unavailable" = "%@ data unavailable — tap to open";
 "popover.unavailable.dismiss" = "Dismiss";
-"widget.empty" = "Open Mimir to load quota.";
-"widget.config.model" = "Model";
-"widget.config.description" = "Choose which model the widget shows.";
 
 /* Status menu */
 "Send anonymous statistics" = "Send anonymous statistics";

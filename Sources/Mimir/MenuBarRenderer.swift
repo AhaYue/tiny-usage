@@ -1,6 +1,6 @@
 import AppKit
 
-/// Original AY Usage renderer: one native image, no image files or web runtime.
+/// Original Tiny Usage renderer: one native image, no image files or web runtime.
 enum MenuBarRenderer {
     enum Style: Int, CaseIterable {
         case bars, percent, both

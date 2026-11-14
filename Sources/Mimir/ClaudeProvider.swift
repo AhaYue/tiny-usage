@@ -19,7 +19,7 @@ extension LiveUsageDataSource {
         // Desktop is opt-in. Besides fallback, this source can supply reset passes that the CLI
         // endpoint does not expose. It is refreshed only when the scheduled full fetch is due.
         var separate: ServiceStatus?
-        if UserDefaults.standard.bool(forKey: "ay.desktopFallbackEnabled") {
+        if UserDefaults.standard.bool(forKey: "tinyusage.desktopFallbackEnabled") {
             if let desktop = await fetchClaudeDesktopWebUsage(userInitiated: userInitiated, cliOrg: cli?.org) {
                 if desktop.sameAccount {
                     main = desktop.status
@@ -243,7 +243,7 @@ extension LiveUsageDataSource {
         // Live data is authoritative: trust the percents even if a window's reset has *just* lapsed.
         // Right after a 5-hour boundary the API briefly returns the old window's `resets_at` (already
         // past) before rolling to the next; reset-classifying that — as we do for genuinely stale
-        // cache — would blank the whole session, so Claude's card and widget vanish for a few minutes.
+        // cache — would blank the whole session, so Claude's card vanishes for a few minutes.
         if live {
             return ServiceStatus(
                 name: name, iconName: "claude",
@@ -487,7 +487,7 @@ extension LiveUsageDataSource {
     /// it's reached only when no prompt-free source has a usable token and the read is user-initiated.
     /// `expiresAt` drives whether `fetchClaude` refreshes before calling the usage API.
     private func readClaudeTokenInfo(userInitiated: Bool) -> ClaudeToken? {
-        if ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"] != nil { return readClaudeCredentialFileToken() }
+        if ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] != nil { return readClaudeCredentialFileToken() }
         return Self.selectClaudeToken(
             file: readClaudeCredentialFileToken(),
             userInitiated: userInitiated,
@@ -535,7 +535,7 @@ extension LiveUsageDataSource {
 
     private static func hookCandidates(_ path: String) -> [URL] {
         let url = URL(fileURLWithPath: path)
-        return url.lastPathComponent == "ay-usage.json"
+        return url.lastPathComponent == "tiny-usage.json"
             ? [url, url.deletingLastPathComponent().appendingPathComponent("mimir-usage.json")] : [url]
     }
     func hookObservedAt(path: String = MimirStatusLineHook.usagePath) -> Date? {
@@ -584,7 +584,7 @@ extension LiveUsageDataSource {
     func fetchClaudeExtraAccount(name: String, dir: URL, userInitiated: Bool,
                                  accountID: String? = nil, refreshDetails: Bool = false) async -> ServiceStatus {
         let service = Self.claudeKeychainService(forConfigDir: dir.path)
-        let hookPath = dir.appendingPathComponent("ay-usage.json").path
+        let hookPath = dir.appendingPathComponent("tiny-usage.json").path
         // Mimir's own copy of this login's access token: read back without a prompt, so the keychain
         // prompt comes at most once per token, not on every open.
         let mirror = "\(Self.mimirClaudeKeychainService)-\(service)"
@@ -596,7 +596,7 @@ extension LiveUsageDataSource {
             try? FileManager.default.removeItem(at: snapshotURL(for: name))
         }
         let hook = readClaudeHookUsage(maxAge: 30 * 60, path: hookPath)
-        if ProcessInfo.processInfo.environment["AY_USAGE_TEST_HOME"] != nil, hook == nil {
+        if ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] != nil, hook == nil {
             return snapshotOrFallback(name, iconName: "claude")
         }
 
@@ -969,7 +969,7 @@ extension LiveUsageDataSource {
         return value
     }
 
-    static let mimirClaudeKeychainService = "AYUsage-claude-oauth"
+    static let mimirClaudeKeychainService = "TinyUsage-claude-oauth"
 
     /// Cache ONLY the short-lived access token (+ its expiry) in Mimir's OWN keychain item. We never
     /// store the refresh token here: refresh tokens rotate single-use and are shared with Claude
