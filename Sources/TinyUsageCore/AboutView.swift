@@ -17,17 +17,19 @@ struct AboutView: View {
         var id: String { name }
     }
 
-    private static let credits = [
-        Credit(name: "Mimir", url: "https://github.com/erayendes/mimir",
-               role: L("Upstream project: Tiny Usage is derived from Mimir (© 2026 Eray Endes)."),
-               license: L("MIT License")),
-        Credit(name: "Sparkle", url: "https://github.com/sparkle-project/Sparkle",
-               role: L("In-app updates (© Sparkle Project and contributors)."),
-               license: L("MIT License")),
-        Credit(name: "ai-usage", url: "https://github.com/wawaka/ai-usage",
-               role: L("Visual and interaction reference; none of its code or assets are used."),
-               license: L("No open-source license declared")),
-    ]
+    private static var credits: [Credit] {
+        [
+            Credit(name: "Mimir", url: "https://github.com/erayendes/mimir",
+                   role: L("Upstream project: Tiny Usage is derived from Mimir (© 2026 Eray Endes)."),
+                   license: L("MIT License")),
+            Credit(name: "Sparkle", url: "https://github.com/sparkle-project/Sparkle",
+                   role: L("In-app updates (© Sparkle Project and contributors)."),
+                   license: L("MIT License")),
+            Credit(name: "ai-usage", url: "https://github.com/wawaka/ai-usage",
+                   role: L("Visual and interaction reference; none of its code or assets are used."),
+                   license: L("No open-source license declared")),
+        ]
+    }
 
     private static var licenseText: String {
         guard let url = Bundle.main.url(forResource: "LICENSE", withExtension: "txt"),
@@ -89,7 +91,7 @@ struct AboutView: View {
                 section(L("Claude status line")) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(wired ? L("Reads usage through Claude Code's status line and keeps your existing one.")
-                                   : L("Not connected. Claude usage needs authorization to query."))
+                                   : L("Queries quota through your existing Claude Code login."))
                             .foregroundStyle(.secondary)
                         Button(wired ? L("Disconnect") : L("Reconnect")) {
                             setHook(!wired)

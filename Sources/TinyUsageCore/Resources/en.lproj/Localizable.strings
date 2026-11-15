@@ -57,6 +57,8 @@
 "OK" = "OK";
 
 /* Settings */
+"Language" = "Language";
+"Follow System" = "Follow System";
 "Launch at login" = "Launch at login";
 "Opens Tiny Usage after you log in." = "Opens Tiny Usage after you log in.";
 "Couldn't change launch at login" = "Couldn't change launch at login";
@@ -96,7 +98,7 @@
 "No open-source license declared" = "No open-source license declared";
 "Claude status line" = "Claude status line";
 "Reads usage through Claude Code's status line and keeps your existing one." = "Reads usage through Claude Code's status line and keeps your existing one.";
-"Not connected. Claude usage needs authorization to query." = "Not connected. Claude usage needs authorization to query.";
+"Queries quota through your existing Claude Code login." = "Queries quota through your existing Claude Code login.";
 "Disconnect" = "Disconnect";
 "Reconnect" = "Reconnect";
 "Tiny Usage License" = "Tiny Usage License";
@@ -107,6 +109,13 @@
 "unknown" = "unknown";
 
 /* Data source notes */
+"snapshot" = "Cached usage";
+"oauth usage api" = "Claude usage API";
+"chatgpt usage api" = "ChatGPT usage API";
+"claude.ai desktop" = "Claude Desktop";
+"Claude Desktop OAuth" = "Claude Desktop OAuth";
+"local .codex sessions" = "Local Codex sessions";
+"local .codex sessions (reset time not found in file)" = "Local Codex sessions · reset time unavailable";
 "out of date" = "out of date";
 "no local source" = "no local source";
 "claude token missing" = "Claude credential not found";
@@ -130,3 +139,25 @@
 "The config was just changed by another program. Try again." = "The config was just changed by another program. Try again.";
 "statusLine was changed externally; left as is, not overwritten." = "statusLine was changed externally; left as is, not overwritten.";
 "The config changed. Try again." = "The config changed. Try again.";
+/* CLI quota and OpenCode Go */
+"Claude Code /usage" = "Claude Code /usage";
+"Manage the key for Go quotas." = "Manage the key for Go quotas.";
+"Configure OpenCode Go" = "Configure OpenCode Go";
+"Use the key already connected in OpenCode, or enter a personal key from the Go subscription’s workspace." = "Use the key already connected in OpenCode, or enter a personal key from the Go subscription’s workspace.";
+"Use OpenCode key" = "Use OpenCode key";
+"Enter personal key" = "Enter personal key";
+"Enter an OpenCode Go key" = "Enter an OpenCode Go key";
+"Personal API key" = "Personal API key";
+"The key is stored in your Mac’s keychain." = "The key is stored in your Mac’s keychain.";
+"Save" = "Save";
+"Open billing" = "Open billing";
+"Monthly" = "Monthly";
+"Monthly %@ left" = "Monthly %@ left";
+"Monthly %@ used" = "Monthly %@ used";
+"OpenCode Go usage" = "OpenCode Go usage";
+"Couldn't find an OpenCode Go key" = "Couldn't find an OpenCode Go key";
+"OpenCode Go rejected the key" = "OpenCode Go rejected the key";
+"This key cannot read OpenCode Go usage" = "This key cannot read OpenCode Go usage";
+"OpenCode Go usage is temporarily unavailable" = "OpenCode Go usage is temporarily unavailable";
+"Couldn't save the OpenCode Go key" = "Couldn't save the OpenCode Go key";
+"Couldn't remove the OpenCode Go key" = "Couldn't remove the OpenCode Go key";

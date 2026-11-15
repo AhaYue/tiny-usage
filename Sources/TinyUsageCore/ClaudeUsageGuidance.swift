@@ -36,7 +36,7 @@ struct ClaudeUsageGuidance: Equatable {
         if note.hasPrefix("claude http ") || note == "claude request failed" || note == "claude no http response" {
             return Self(state: .unavailable, title: L("Can't update right now"), detail: nil, offersAuthorize: false)
         }
-        if note == L("token expired — open Claude Code") {
+        if AppLanguage.matches(note, key: "token expired — open Claude Code") {
             return Self(state: .loginExpired, title: L("Claude login expired"), detail: L("Open Claude Code to restore it."),
                         offersAuthorize: false)
         }

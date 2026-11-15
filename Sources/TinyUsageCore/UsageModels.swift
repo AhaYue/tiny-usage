@@ -13,8 +13,11 @@ struct ServiceStatus: Identifiable {
     /// The UI labels that window from this rather than assuming 7 days — OpenAI's Go plan uses a
     /// ~30-day window. nil = unknown, and the UI then falls back to its plain weekly label.
     let weeklyWindowSeconds: TimeInterval?
+    let monthlyResetAt: Date?
+    let monthlyRemainingPercent: Int?
     let models: [ModelStatus]
     let isAvailable: Bool
+    /// A localization key or diagnostic text. Translate it at presentation time.
     let statusNote: String?
     /// Last-known data shown because the live source is gone (e.g. the live source was unreachable).
     /// Not "available", but must survive the popover's unavailable-service filter so the
@@ -35,6 +38,12 @@ struct ServiceStatus: Identifiable {
     /// Which login this card reads — its plan and e-mail, shown under the provider's name so two
     /// cards of one provider can be told apart. nil when the source doesn't say.
     let account: AccountInfo?
+    /// Internal identity of the directory or credential that produced this reading.
+    let sourceID: String?
+
+    var quotaResetDates: [Date] {
+        [sessionResetAt, weeklyResetAt, monthlyResetAt].compactMap { $0 }
+    }
 
     init(
         name: String,
@@ -44,6 +53,8 @@ struct ServiceStatus: Identifiable {
         sessionRemainingPercent: Int? = nil,
         weeklyRemainingPercent: Int? = nil,
         weeklyWindowSeconds: TimeInterval? = nil,
+        monthlyResetAt: Date? = nil,
+        monthlyRemainingPercent: Int? = nil,
         models: [ModelStatus],
         isAvailable: Bool,
         statusNote: String?,
@@ -52,7 +63,8 @@ struct ServiceStatus: Identifiable {
         cooldownHint: TimeInterval? = nil,
         dataUnavailable: Bool = false,
         account: AccountInfo? = nil,
-        observedAt: Date? = nil
+        observedAt: Date? = nil,
+        sourceID: String? = nil
     ) {
         self.observedAt = observedAt
         self.name = name
@@ -62,6 +74,8 @@ struct ServiceStatus: Identifiable {
         self.sessionRemainingPercent = sessionRemainingPercent
         self.weeklyRemainingPercent = weeklyRemainingPercent
         self.weeklyWindowSeconds = weeklyWindowSeconds
+        self.monthlyResetAt = monthlyResetAt
+        self.monthlyRemainingPercent = monthlyRemainingPercent
         self.models = models
         self.isAvailable = isAvailable
         self.statusNote = statusNote
@@ -70,6 +84,7 @@ struct ServiceStatus: Identifiable {
         self.cooldownHint = cooldownHint
         self.dataUnavailable = dataUnavailable
         self.account = account
+        self.sourceID = sourceID
     }
 
     /// Return a copy with `infoText` attached. Lets the data layer set the explainer once
@@ -108,6 +123,10 @@ struct ServiceStatus: Identifiable {
         copy(observedAt: .some(date))
     }
 
+    func withSourceID(_ id: String?) -> ServiceStatus {
+        copy(sourceID: .some(id))
+    }
+
     /// The provider's own name — "Claude" for the second login stored as "Claude Work". `name` stays
     /// the card's identity (snapshots, cooldowns); this is what the user reads.
     var providerTitle: String {
@@ -129,7 +148,8 @@ struct ServiceStatus: Identifiable {
         cooldownHint: TimeInterval?? = nil,
         account: AccountInfo?? = nil,
         observedAt: Date?? = nil,
-        models: [ModelStatus]? = nil
+        models: [ModelStatus]? = nil,
+        sourceID: String?? = nil
     ) -> ServiceStatus {
         ServiceStatus(
             name: name,
@@ -139,6 +159,8 @@ struct ServiceStatus: Identifiable {
             sessionRemainingPercent: sessionRemainingPercent,
             weeklyRemainingPercent: weeklyRemainingPercent,
             weeklyWindowSeconds: weeklyWindowSeconds,
+            monthlyResetAt: monthlyResetAt,
+            monthlyRemainingPercent: monthlyRemainingPercent,
             models: models ?? self.models,
             isAvailable: isAvailable,
             statusNote: statusNote ?? self.statusNote,
@@ -147,7 +169,8 @@ struct ServiceStatus: Identifiable {
             cooldownHint: cooldownHint ?? self.cooldownHint,
             dataUnavailable: dataUnavailable,
             account: account ?? self.account,
-            observedAt: observedAt ?? self.observedAt
+            observedAt: observedAt ?? self.observedAt,
+            sourceID: sourceID ?? self.sourceID
         )
     }
 }
@@ -198,7 +221,7 @@ enum ModelWindow {
 /// The single top→bottom display order for the services, read by BOTH the popover cards
 /// (`PopoverView.contentView`) and the menu bar. Keeping it in one place is load-bearing: when
 /// the two defined the order independently they drifted, and a dot lined up with the wrong card.
-let serviceDisplayOrder = ["Claude", "Codex"]
+let serviceDisplayOrder = ["Claude", "Codex", OpenCodeGoConfiguration.name]
 
 extension Array where Element == ServiceStatus {
     /// Sorted into the canonical display order (Claude, Codex); unknown names last.
@@ -295,6 +318,35 @@ struct ModelStatus: Identifiable {
     let symbol: String?
     /// Stable key identifying the group a row belongs to. A nil key denotes a standalone row.
     let groupLabel: String?
+
+    /// Older snapshots and live providers can carry either localized spelling of a billing label.
+    var displayValueRowName: String {
+        if AppLanguage.matches(name, key: "Spending") { return L("Spending") }
+        if AppLanguage.matches(name, key: "Credit balance") { return L("Credit balance") }
+        if symbol == "cloud" {
+            for language in [AppLanguage.english, .simplifiedChinese] {
+                let label = language.text("Cloud credit")
+                if name == label || name.hasPrefix(label + " ") {
+                    return L("Cloud credit") + name.dropFirst(label.count)
+                }
+            }
+        }
+        return name
+    }
+
+    var displayValueRowText: String? {
+        guard let valueText, AppLanguage.matches(name, key: "Credit balance") else { return valueText }
+        if AppLanguage.matches(valueText, key: "Unlimited") { return L("Unlimited") }
+        for language in [AppLanguage.english, .simplifiedChinese] {
+            // The balance is stored as a number followed by the locale's unit.
+            let suffix = language.text("%@ credits").dropFirst(2)
+            if valueText.hasSuffix(suffix) {
+                let amount = String(valueText.dropLast(suffix.count))
+                return String(format: L("%@ credits"), amount)
+            }
+        }
+        return valueText
+    }
 
     var renewalScopeLabel: String? {
         switch caption {

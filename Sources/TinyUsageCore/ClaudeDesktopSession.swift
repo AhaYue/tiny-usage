@@ -84,7 +84,7 @@ extension LiveUsageDataSource {
             // Before trusting anything cached, make sure it belongs to this account.
             noteClaudeAccount(uuid)
             writeClaudeUsageCache(usageData)
-            var status = buildClaudeStatus(from: root, note: L("Claude Desktop · includes reset credits")).withObservedAt(Date())
+            var status = buildClaudeStatus(from: root, note: "Claude Desktop · includes reset credits").withObservedAt(Date())
             // With a CLI login, its profile names the account (e-mail included); without one the
             // organization's plan is all there is.
             if cliOrg == nil { status = status.withAccount(AccountInfo(plan: Self.claudeOrgPlan(org), org: uuid)) }

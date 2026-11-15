@@ -57,6 +57,8 @@
 "OK" = "好";
 
 /* Settings */
+"Language" = "语言";
+"Follow System" = "跟随系统";
 "Launch at login" = "登录时启动";
 "Opens Tiny Usage after you log in." = "登录后自动打开 Tiny Usage。";
 "Couldn't change launch at login" = "无法更改开机启动";
@@ -96,7 +98,7 @@
 "No open-source license declared" = "未声明开源许可";
 "Claude status line" = "Claude 状态栏";
 "Reads usage through Claude Code's status line and keeps your existing one." = "通过 Claude Code 状态栏读取用量，保留原有状态栏。";
-"Not connected. Claude usage needs authorization to query." = "未接入，Claude 用量需授权后查询。";
+"Queries quota through your existing Claude Code login." = "通过已登录的 Claude Code 查询配额。";
 "Disconnect" = "移除接入";
 "Reconnect" = "重新接入";
 "Tiny Usage License" = "Tiny Usage 许可";
@@ -107,6 +109,13 @@
 "unknown" = "未知";
 
 /* Data source notes */
+"snapshot" = "缓存用量";
+"oauth usage api" = "Claude 用量 API";
+"chatgpt usage api" = "ChatGPT 用量 API";
+"claude.ai desktop" = "Claude 桌面端";
+"Claude Desktop OAuth" = "Claude 桌面端 OAuth";
+"local .codex sessions" = "Codex 本地会话";
+"local .codex sessions (reset time not found in file)" = "Codex 本地会话 · 重置时间未知";
 "out of date" = "旧数据";
 "no local source" = "未找到本地来源";
 "claude token missing" = "未找到 Claude 凭证";
@@ -130,3 +139,25 @@
 "The config was just changed by another program. Try again." = "配置刚被其他程序修改，请重试。";
 "statusLine was changed externally; left as is, not overwritten." = "statusLine 已有外部修改，保留现场，未自动覆盖。";
 "The config changed. Try again." = "配置已变化，请重试。";
+/* CLI quota and OpenCode Go */
+"Claude Code /usage" = "Claude Code 用量查询";
+"Manage the key for Go quotas." = "管理查询 Go 配额的密钥。";
+"Configure OpenCode Go" = "配置 OpenCode Go";
+"Use the key already connected in OpenCode, or enter a personal key from the Go subscription’s workspace." = "使用 OpenCode 中已连接的密钥，或填写 Go 套餐所在工作区的个人密钥。";
+"Use OpenCode key" = "使用 OpenCode 密钥";
+"Enter personal key" = "输入个人密钥";
+"Enter an OpenCode Go key" = "输入 OpenCode Go 密钥";
+"Personal API key" = "个人 API 密钥";
+"The key is stored in your Mac’s keychain." = "密钥保存在这台 Mac 的钥匙串中。";
+"Save" = "保存";
+"Open billing" = "打开账单";
+"Monthly" = "月度";
+"Monthly %@ left" = "月度剩余 %@";
+"Monthly %@ used" = "月度已用 %@";
+"OpenCode Go usage" = "OpenCode Go 用量";
+"Couldn't find an OpenCode Go key" = "找不到 OpenCode Go 密钥";
+"OpenCode Go rejected the key" = "OpenCode Go 拒绝了此密钥";
+"This key cannot read OpenCode Go usage" = "此密钥无法读取 OpenCode Go 配额";
+"OpenCode Go usage is temporarily unavailable" = "暂时无法读取 OpenCode Go 配额";
+"Couldn't save the OpenCode Go key" = "无法保存 OpenCode Go 密钥";
+"Couldn't remove the OpenCode Go key" = "无法移除 OpenCode Go 密钥";

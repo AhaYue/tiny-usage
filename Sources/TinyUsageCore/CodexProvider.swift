@@ -1,67 +1,149 @@
 import Foundation
 
 extension LiveUsageDataSource {
-    /// `home` is a second login's `CODEX_HOME` (see `ExtraAccount`); nil is the main one.
+    /// `home` is the resolved directory for this card. Nil resolves the main login.
     func fetchCodex(name: String = "Codex", home: URL? = nil) async -> ServiceStatus {
-        let account = codexAccount(home: home)
-        let apiStatus = await fetchCodexUsageAPI(name: name, home: home)?.withAccount(account)
-        if let apiStatus, apiStatus.isAvailable && !apiStatus.isStale {
-            saveSnapshot(apiStatus)
-            return apiStatus
+        let directory = codexHome(explicit: home)
+        let login = readCodexLogin(in: directory)
+        guard let login, !login.isExpired else {
+            return codexLocalOrSnapshot(name: name, directory: directory, login: login)
         }
-        return codexLocalOrSnapshot(name: name, home: home).withCooldownHint(apiStatus?.cooldownHint)
+
+        let cached = codexSnapshot(name: name, directory: directory, account: login.account)
+        let apiStatus = await fetchCodexUsageAPI(name: name, accessToken: login.accessToken,
+                                                accountID: login.account.id, cached: cached)
+        let currentLogin = readCodexLogin(in: directory)
+        guard !Task.isCancelled else {
+            return codexSnapshotOrFallback(name: name, home: directory)
+        }
+        guard login.matches(currentLogin) else {
+            return codexLocalOrSnapshot(name: name, directory: directory, login: currentLogin, accountChanged: true)
+        }
+        if let apiStatus, apiStatus.isAvailable && !apiStatus.isStale {
+            let status = apiStatus.withAccount(currentLogin?.account).withSourceID(codexSourceID(directory))
+            saveSnapshot(status)
+            return status
+        }
+        return codexLocalOrSnapshot(name: name, directory: directory, login: currentLogin)
+            .withCooldownHint(apiStatus?.cooldownHint)
     }
 
     func codexLocalOrSnapshot(name: String = "Codex", home: URL? = nil) -> ServiceStatus {
-        let account = codexAccount(home: home)
+        let directory = codexHome(explicit: home)
+        return codexLocalOrSnapshot(name: name, directory: directory, login: readCodexLogin(in: directory))
+    }
 
-        // Tiny Usage never refreshes Codex's token (see `codexAccessToken(from:)`), so an expired one
-        // stays expired until the user runs the CLI. Say that, rather than leaving them with a
-        // silently ageing snapshot and no idea what to do about it.
-        let note = codexTokenExpired(home: home) ? L("token expired — run codex login") : nil
+    private func codexLocalOrSnapshot(name: String, directory: URL, login: CodexLogin?,
+                                      accountChanged: Bool = false) -> ServiceStatus {
+        let account = login?.account
+        let sourceID = codexSourceID(directory)
+        let note = login?.isExpired == true ? "token expired — run codex login" : nil
+        let previous = loadSnapshot(for: name, iconName: "codex", staleNote: note ?? "out of date")
+        let snapshot = previous.flatMap { matchingCodexSnapshot($0, directory: directory, account: account) }
 
-        var local = fetchCodexLocalSessions(name: name, home: home).withAccount(account)
-        if local.isAvailable, let snapshot = loadSnapshot(for: name, iconName: "codex"),
-           let snapshotID = snapshot.account?.id, snapshotID == account?.id, !snapshot.models.isEmpty {
+        // JSONL quotas do not identify the login. When the last reading proves a switch in this
+        // directory, skip readings that predate the current login file.
+        let switched = (previous?.sourceID == sourceID || (previous?.sourceID == nil && directory.path == defaultCodexHome.path))
+            && previous?.account?.id != nil && account?.id != nil && previous?.account?.id != account?.id
+        let cutoff = switched || accountChanged ? login?.modifiedAt ?? .distantFuture : nil
+        var local = codexSessionStatus(name: name, directory: directory, after: cutoff)
+            .withAccount(account).withSourceID(sourceID)
+        if local.isAvailable, let snapshot, account?.id != nil, !snapshot.models.isEmpty {
             local = local.withModels(snapshot.models).markedStale("local usage; credits from previous snapshot")
                 .withObservedAt(snapshot.observedAt)
         }
         if local.isAvailable {
-            saveSnapshot(local)
-            // An expired token means the CLI hasn't run since it lapsed, so its session file is at
-            // least that old: dim it instead of passing days-old numbers off as live.
-            return note.map(local.markedStale) ?? local
+            let status = note.map(local.markedStale) ?? local
+            saveSnapshot(status)
+            return status
         }
-        // Both live sources failed — show the last-known snapshot instead of vanishing.
-        let snapshot = loadSnapshot(for: name, iconName: "codex",
-                                    staleNote: note ?? L("out of date"))
-        return (note.flatMap { snapshot?.markedStale($0) } ?? snapshot)?.withAccount(account) ?? local
+        return (note.flatMap { snapshot?.markedStale($0) } ?? snapshot) ?? local
     }
 
-    /// The login a Codex home holds — e-mail, plan and ChatGPT account id from its `id_token`. Local
-    /// file only; nil when the dir has no usable login.
+    /// Used for startup and timeouts, where a local-file scan must not delay the response.
+    func codexSnapshotOrFallback(name: String = "Codex", home: URL? = nil) -> ServiceStatus {
+        let directory = codexHome(explicit: home)
+        let account = readCodexLogin(in: directory)?.account
+        return codexSnapshot(name: name, directory: directory, account: account)
+            ?? unavailableService(name: name, iconName: "codex", models: [])
+                .withAccount(account).withSourceID(codexSourceID(directory))
+    }
+
     func codexAccount(home: URL?) -> AccountInfo? {
-        guard let auth = readCodexAuthState(home: home)?.auth else { return nil }
-        let idToken = (auth["tokens"] as? [String: Any])?["id_token"] as? String ?? auth["id_token"] as? String
-        let claims = idToken.flatMap(decodeJWTPayload)
-        let openai = claims?["https://api.openai.com/auth"] as? [String: Any]
-        return AccountInfo(plan: AccountInfo.codexPlan(openai?["chatgpt_plan_type"] as? String),
-                           email: claims?["email"] as? String,
-                           id: codexAccountID(from: auth))
+        readCodexLogin(in: codexHome(explicit: home))?.account
     }
 
-    /// Set by the token read: the CLI is logged in, but the token it holds has run out.
-    private func codexTokenExpired(home: URL?) -> Bool {
-        guard let state = readCodexAuthState(home: home), let token = codexAccessToken(in: state.auth) else { return false }
-        return jwtExpiry(token).map { $0.timeIntervalSinceNow <= 30 } ?? false
+    func codexHome(explicit: URL? = nil) -> URL {
+        let env = ProcessInfo.processInfo.environment
+        return codexHome(explicit: explicit, userHome: Self.userHome,
+                         configuredHome: env["TINY_USAGE_TEST_HOME"] == nil ? env["CODEX_HOME"] : nil)
+    }
+
+    func codexHome(explicit: URL? = nil, userHome: URL, configuredHome: String?) -> URL {
+        if let explicit { return canonicalCodexDirectory(explicit) }
+        if let path = configuredHome, path.hasPrefix("/") {
+            return canonicalCodexDirectory(URL(fileURLWithPath: path, isDirectory: true))
+        }
+        let main = canonicalCodexDirectory(userHome.appendingPathComponent(".codex", isDirectory: true))
+        if readCodexLogin(in: main) != nil { return main }
+        let legacy = canonicalCodexDirectory(userHome.appendingPathComponent(".config/codex", isDirectory: true))
+        let legacyHasData = readCodexLogin(in: legacy) != nil || !codexSessionFiles(in: legacy).isEmpty
+        return legacyHasData && codexSessionFiles(in: main).isEmpty ? legacy : main
+    }
+
+    func codexExtraAccounts(mainHome: URL, candidates: [ExtraAccount] = ExtraAccount.codex) -> [ExtraAccount] {
+        let main = canonicalCodexDirectory(mainHome)
+        var directories = Set([main.path])
+        var accounts = Set([readCodexLogin(in: main)?.account.id].compactMap { $0 })
+        return candidates.compactMap { extra in
+            let directory = canonicalCodexDirectory(extra.dir)
+            guard directories.insert(directory.path).inserted else { return nil }
+            if let id = readCodexLogin(in: directory)?.account.id, !accounts.insert(id).inserted { return nil }
+            return ExtraAccount(name: extra.name, dir: directory)
+        }
+    }
+
+    private var defaultCodexHome: URL {
+        canonicalCodexDirectory(Self.userHome.appendingPathComponent(".codex", isDirectory: true))
+    }
+
+    private func canonicalCodexDirectory(_ home: URL) -> URL {
+        home.standardizedFileURL.resolvingSymlinksInPath()
+    }
+
+    private func codexSourceID(_ home: URL) -> String { "codex:\(home.path)" }
+
+    private func codexSnapshot(name: String, directory: URL, account: AccountInfo?) -> ServiceStatus? {
+        loadSnapshot(for: name, iconName: "codex").flatMap {
+            matchingCodexSnapshot($0, directory: directory, account: account)
+        }
+    }
+
+    private func matchingCodexSnapshot(_ snapshot: ServiceStatus, directory: URL,
+                                       account: AccountInfo?) -> ServiceStatus? {
+        guard snapshot.account?.id == account?.id else { return nil }
+        let sourceID = codexSourceID(directory)
+        if let savedSourceID = snapshot.sourceID {
+            return savedSourceID == sourceID ? snapshot : nil
+        }
+        guard account?.id != nil || (snapshot.name == "Codex" && directory.path == defaultCodexHome.path) else { return nil }
+        return snapshot.withSourceID(sourceID)
     }
 
     func fetchCodexLocalSessions(name: String, home: URL?) -> ServiceStatus {
-        let base = (home ?? Self.userHome.appendingPathComponent(".codex"))
-            .appendingPathComponent("sessions")
-        for file in SessionFileIndex.shared.files(in: base) {
+        codexSessionStatus(name: name, directory: codexHome(explicit: home), after: nil)
+    }
+
+    private func codexSessionFiles(in directory: URL) -> [URL] {
+        SessionFileIndex.shared.files(in: directory.appendingPathComponent("sessions", isDirectory: true))
+    }
+
+    private func codexSessionStatus(name: String, directory: URL, after cutoff: Date?) -> ServiceStatus {
+        for file in codexSessionFiles(in: directory) {
             let status = readCodexSessionFile(file, name: name)
-            if status.isAvailable { return status }
+            guard status.isAvailable else { continue }
+            if let cutoff, (status.observedAt ?? .distantPast) <= cutoff { continue }
+            return status
         }
         return unavailableService(name: name, iconName: "codex", models: [])
     }
@@ -145,17 +227,8 @@ extension LiveUsageDataSource {
         )
     }
 
-    private func fetchCodexUsageAPI(name: String, home: URL?) async -> ServiceStatus? {
-        guard let authState = readCodexAuthState(home: home),
-              let accessToken = codexAccessToken(from: authState) else {
-            return nil
-        }
-
-        return await fetchCodexUsageAPI(name: name, accessToken: accessToken,
-                                        accountID: codexAccountID(from: authState.auth))
-    }
-
-    private func fetchCodexUsageAPI(name: String, accessToken: String, accountID: String?) async -> ServiceStatus? {
+    private func fetchCodexUsageAPI(name: String, accessToken: String, accountID: String?,
+                                    cached: ServiceStatus?) async -> ServiceStatus? {
         var req = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/usage")!, timeoutInterval: 10)
         req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -168,7 +241,7 @@ extension LiveUsageDataSource {
             let (data, response) = try await URLSession.shared.data(for: req)
             if let http = response as? HTTPURLResponse, [401, 403, 429].contains(http.statusCode) {
                 let delay = http.statusCode == 429 ? (AdaptiveUsageSchedule.retryAfter(http.value(forHTTPHeaderField: "Retry-After")) ?? 900) : 1800
-                return snapshotOrFallback(name, iconName: "codex").withCooldownHint(delay)
+                return unavailableService(name: name, iconName: "codex", models: []).withCooldownHint(delay)
             }
             guard (response as? HTTPURLResponse).map({ 200 ... 299 ~= $0.statusCode }) == true,
                   let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -177,11 +250,10 @@ extension LiveUsageDataSource {
             }
             Self.recordCodexShape(root)
             let fetched = await fetchCodexResetCredits(accessToken: accessToken, accountID: accountID)
-            let cached = loadSnapshot(for: name, iconName: "codex")
-            let previous = cached?.account?.id == accountID && accountID != nil
+            let previous = accountID != nil
                 ? cached?.models.filter { $0.groupLabel == ModelStatus.renewalCreditGroup && ($0.resetAt.map { $0 > Date() } ?? false) } ?? [] : []
             let status = codexStatus(fromUsageRoot: root, extraRows: fetched ?? previous, name: name).withObservedAt(Date())
-            return fetched == nil && !previous.isEmpty ? status.withStatusNote(L("Quota API · reset credits from last capture")) : status
+            return fetched == nil && !previous.isEmpty ? status.withStatusNote("Quota API · reset credits from last capture") : status
         } catch {
             return nil
         }
@@ -444,47 +516,20 @@ extension LiveUsageDataSource {
         return slotIsPrimary
     }
 
-    private func readCodexAuthState(home codexHomeDir: URL?) -> CodexAuthState? {
-        let home = Self.userHome
-        var paths: [URL] = []
-        if let codexHomeDir {
-            // A second login reads only its own dir — never fall back to the main account's token.
-            paths.append(codexHomeDir.appendingPathComponent("auth.json"))
-        } else {
-            if ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] == nil, let codexHome = ProcessInfo.processInfo.environment["CODEX_HOME"],
-               !codexHome.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                paths.append(URL(fileURLWithPath: codexHome).appendingPathComponent("auth.json"))
-            }
-            paths.append(home.appendingPathComponent(".codex/auth.json"))
-            paths.append(home.appendingPathComponent(".config/codex/auth.json"))
-        }
+    /// Read the identity and access token from one copy of the CLI's auth file. The CLI owns renewal.
+    private func readCodexLogin(in directory: URL) -> CodexLogin? {
+        let file = directory.appendingPathComponent("auth.json").resolvingSymlinksInPath()
+        guard let data = try? Data(contentsOf: file),
+              let auth = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let accessToken = codexAccessToken(in: auth) else { return nil }
 
-        for path in paths {
-            guard let data = try? Data(contentsOf: path),
-                  let auth = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  codexAccessToken(in: auth) != nil else {
-                continue
-            }
-            return CodexAuthState(path: path, auth: auth)
-        }
-        return nil
-    }
-
-    /// Read whatever token the Codex CLI currently holds; never refresh it, never write it back.
-    ///
-    /// OpenAI rotates Codex's refresh token single-use (openai/codex#46028: reusing one outside a
-    /// ~30s tolerance window returns `invalid_grant`; OpenHands/enterprise#426 quotes Codex's own
-    /// `auth/manager.rs`). Tiny Usage refreshing in the background therefore consumes the token the CLI
-    /// still holds and can log the user out of their own terminal — and the CLI refreshes often,
-    /// up to six times in a single failed turn (openai/codex#48303). This is the same posture the
-    /// Claude side already takes, and for the same reason.
-    ///
-    /// A token within 30s of expiry is treated as gone rather than used: it would likely die
-    /// mid-request, and there is nothing to fall back to but the same dead token.
-    private func codexAccessToken(from state: CodexAuthState) -> String? {
-        guard let accessToken = codexAccessToken(in: state.auth) else { return nil }
-        if let expiresAt = jwtExpiry(accessToken), expiresAt.timeIntervalSinceNow <= 30 { return nil }
-        return accessToken
+        let idToken = (auth["tokens"] as? [String: Any])?["id_token"] as? String ?? auth["id_token"] as? String
+        let claims = idToken.flatMap(decodeJWTPayload)
+        let openai = claims?["https://api.openai.com/auth"] as? [String: Any]
+        let account = AccountInfo(plan: AccountInfo.codexPlan(openai?["chatgpt_plan_type"] as? String),
+                                  email: claims?["email"] as? String, id: codexAccountID(from: auth))
+        return CodexLogin(account: account, accessToken: accessToken, expiresAt: jwtExpiry(accessToken),
+                          modifiedAt: (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate)
     }
 
     private func codexAccessToken(in auth: [String: Any]) -> String? {
@@ -550,9 +595,19 @@ private struct CodexRateWindow: Decodable {
     let resets_at: Int?
 }
 
-private struct CodexAuthState {
-    let path: URL
-    let auth: [String: Any]
+private struct CodexLogin {
+    let account: AccountInfo
+    let accessToken: String
+    let expiresAt: Date?
+    let modifiedAt: Date?
+
+    var isExpired: Bool { expiresAt.map { $0.timeIntervalSinceNow <= 30 } ?? false }
+
+    func matches(_ current: CodexLogin?) -> Bool {
+        guard let current else { return false }
+        if let id = account.id { return id == current.account.id }
+        return current.account.id == nil && current.accessToken == accessToken
+    }
 }
 
 private struct CodexWindowSummary {

@@ -3,12 +3,7 @@ import Security
 
 @MainActor
 final class UsageStore: ObservableObject {
-    /// Launch shows the last-known readings straight away. The first refresh waits for all three
-    /// providers — up to their 8-second timeouts — and until then the popover had nothing to draw
-    /// but a spinner, on every launch and after every update.
-    @Published var services: [ServiceStatus] = LiveUsageDataSource.fallbackServices().map {
-        LiveUsageDataSource().snapshotOrFallback($0.name, iconName: $0.iconName)
-    }
+    @Published var services: [ServiceStatus]
     @Published var isRefreshing = false
     private let source = LiveUsageDataSource()
     /// Per-service fetch cooldown: while `Date()` is before the stored value, that service is
@@ -17,6 +12,18 @@ final class UsageStore: ObservableObject {
     private var schedule = AdaptiveUsageSchedule()
     private var pendingRefresh = false
     private var pendingAuthorization = false
+    private var openCodeConfigurationRevision = 0
+
+    init(services: [ServiceStatus]? = nil) {
+        self.services = services ?? source.initialStatuses()
+    }
+
+    func openCodeConfigurationChanged() {
+        openCodeConfigurationRevision += 1
+        schedule.remove(OpenCodeGoConfiguration.name)
+        services.removeAll { $0.name == OpenCodeGoConfiguration.name }
+        refresh(force: true)
+    }
 
     /// Services whose "couldn't fetch" banner the user dismissed. Persisted so it survives a
     /// relaunch, but cleared as soon as the service reports data again — otherwise one dismissal
@@ -42,11 +49,16 @@ final class UsageStore: ObservableObject {
         }
         isRefreshing = true
         let now = Date()
+        let openCode = OpenCodeGoConfiguration.name
+        if services.first(where: { $0.name == openCode })?.sourceID != OpenCodeGoConfiguration.currentSourceID() {
+            schedule.remove(openCode)
+        }
         let skip = schedule.skipped(now: now, manual: force || userInitiated)
+        let openCodeRevision = openCodeConfigurationRevision
         let source = self.source
         Task {
             let result = await Task.detached(priority: .userInitiated) {
-                await source.fetchAll(skip: skip, userInitiated: userInitiated).sorted { $0.name < $1.name }
+                await source.fetchAll(skip: skip, userInitiated: userInitiated)
             }.value
             defer {
                 self.isRefreshing = false
@@ -57,13 +69,19 @@ final class UsageStore: ObservableObject {
                     self.refresh(userInitiated: authorize, force: true)
                 }
             }
+            let currentOpenCodeID = OpenCodeGoConfiguration.currentSourceID()
+            let current = result.filter {
+                $0.name != openCode || (openCodeConfigurationRevision == openCodeRevision &&
+                                        currentOpenCodeID != nil && $0.sourceID == currentOpenCodeID)
+            }
             let mode = RefreshMode.current
-            for status in result where !skip.contains(status.name) { self.schedule.record(status, now: Date(), mode: mode) }
-            let resolved = result.map { status -> ServiceStatus in
+            for status in current where !skip.contains(status.name) { self.schedule.record(status, now: Date(), mode: mode) }
+            let resolved = current.map { status -> ServiceStatus in
                 guard skip.contains(status.name), let previous = self.services.first(where: { $0.name == status.name }),
+                      previous.sourceID == status.sourceID, previous.account?.id == status.account?.id,
                       previous.isAvailable, !previous.isStale, let observed = previous.observedAt,
                       Date().timeIntervalSince(observed) < 1800,
-                      [previous.sessionResetAt, previous.weeklyResetAt].compactMap({ $0 }).allSatisfy({ $0 > Date() }) else { return status }
+                      previous.quotaResetDates.allSatisfy({ $0 > Date() }) else { return status }
                 // Waiting for the next scheduled request is not a fetch failure. Keep a valid
                 // recent reading unless a local source actually supplied newer data.
                 if let newer = status.observedAt, newer > observed, status.isAvailable { return status }
@@ -86,6 +104,12 @@ final class UsageStore: ObservableObject {
 }
 
 struct LiveUsageDataSource {
+    func initialStatuses() -> [ServiceStatus] {
+        let claudeAccount = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
+        return [claudePrimarySnapshot(account: claudeAccount), codexSnapshotOrFallback()]
+            + [openCodeGoCachedStatus()].compactMap { $0 }
+    }
+
     static func fallbackServices() -> [ServiceStatus] {
         [
             ServiceStatus(
@@ -95,7 +119,7 @@ struct LiveUsageDataSource {
                 weeklyResetAt: nil,
                 models: [],
                 isAvailable: false,
-                statusNote: L("no local source")
+                statusNote: "no local source"
             ),
             ServiceStatus(
                 name: "Codex",
@@ -104,7 +128,7 @@ struct LiveUsageDataSource {
                 weeklyResetAt: nil,
                 models: [],
                 isAvailable: false,
-                statusNote: L("no local source")
+                statusNote: "no local source"
             )
         ]
     }
@@ -113,32 +137,37 @@ struct LiveUsageDataSource {
     /// and are served from their snapshot instead of hitting the network. A live fetch that times
     /// out also falls back to the snapshot, so a transient failure never empties a card.
     func fetchAll(skip: Set<String> = [], userInitiated: Bool = false) async -> [ServiceStatus] {
-        let order = ["Claude", "Codex"]
         // A second config dir signed in to a login another card already reads is the same account:
         // one card, not two. Read from local profiles only, so this costs no request.
         let claudeMain = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
-        let codexMain = codexAccount(home: nil)
+        let codexMain = codexHome()
         let claudeExtras = Self.distinct(ExtraAccount.claude, seen: claudeMain?.id) {
             Self.claudeAccount(configFile: $0.dir.appendingPathComponent(".claude.json"))
         }
-        let codexExtras = Self.distinct(ExtraAccount.codex, seen: codexMain?.id) { codexAccount(home: $0.dir) }
+        let codexExtras = codexExtraAccounts(mainHome: codexMain)
 
         return await withTaskGroup(of: [ServiceStatus].self) { group in
             group.addTask {
                 if skip.contains("Claude") {
-                    let card = self.readClaudeHookUsage(maxAge: 30 * 60).map { self.claudeCardFromHook($0) }
-                        ?? self.snapshotOrFallback("Claude", iconName: "claude")
-                    let other = self.claudeOtherAccountSnapshot(cliOrg: claudeMain?.org)
-                    return [card.withAccount(claudeMain)] + [other].compactMap { $0 }
+                    let account = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
+                    if let org = account?.org { self.noteClaudeAccount(org, profileID: account?.id) }
+                    let card = self.readClaudeHookUsage(maxAge: 30 * 60).map {
+                        self.claudeCardFromHook($0).withAccount(account)
+                    } ?? self.claudePrimarySnapshot(account: account)
+                    let other = self.claudeOtherAccountSnapshot(cliOrg: account?.org)
+                    return [card] + [other].compactMap { $0 }
                 }
-                let cards = await withTimeout(seconds: 8) { await fetchClaudeCards(userInitiated: userInitiated) }
-                    ?? [self.snapshotOrFallback("Claude", iconName: "claude")]
-                return cards.map { $0.name == "Claude" ? $0.withAccount(claudeMain) : $0 }
+                if let cards = await withTimeout(seconds: 13, operation: {
+                    await fetchClaudeCards(userInitiated: userInitiated)
+                }) { return cards }
+                let account = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
+                return [self.claudePrimarySnapshot(account: account)]
+                    + [self.claudeOtherAccountSnapshot(cliOrg: account?.org)].compactMap { $0 }
             }
             group.addTask {
-                if skip.contains("Codex") { return [self.codexLocalOrSnapshot().withAccount(codexMain)] }
-                return [(await withTimeout(seconds: 8) { await fetchCodex() }
-                    ?? self.snapshotOrFallback("Codex", iconName: "codex")).withAccount(codexMain)]
+                if skip.contains("Codex") { return [self.codexLocalOrSnapshot(home: codexMain)] }
+                return [await withTimeout(seconds: 8) { await fetchCodex(home: codexMain) }
+                    ?? self.codexSnapshotOrFallback(home: codexMain)]
             }
             // Second logins (`~/.claude-work`, `~/.codex-work`): one card each, only when the dir exists.
             for (extra, account) in claudeExtras {
@@ -152,11 +181,22 @@ struct LiveUsageDataSource {
                     } ?? self.snapshotOrFallback(extra.name, iconName: "claude")).withAccount(account)]
                 }
             }
-            for (extra, account) in codexExtras {
+            for extra in codexExtras {
                 group.addTask {
-                    if skip.contains(extra.name) { return [self.codexLocalOrSnapshot(name: extra.name, home: extra.dir).withAccount(account)] }
-                    return [(await withTimeout(seconds: 8) { await fetchCodex(name: extra.name, home: extra.dir) }
-                        ?? self.snapshotOrFallback(extra.name, iconName: "codex")).withAccount(account)]
+                    if skip.contains(extra.name) { return [self.codexLocalOrSnapshot(name: extra.name, home: extra.dir)] }
+                    return [await withTimeout(seconds: 8) { await fetchCodex(name: extra.name, home: extra.dir) }
+                        ?? self.codexSnapshotOrFallback(name: extra.name, home: extra.dir)]
+                }
+            }
+            if OpenCodeGoConfiguration.mode != .disabled {
+                group.addTask {
+                    if skip.contains(OpenCodeGoConfiguration.name) {
+                        return [self.openCodeGoCachedStatus()].compactMap { $0 }
+                    }
+                    if let result = await withTimeout(seconds: 8, operation: { await fetchOpenCodeGo() }) {
+                        return [result].compactMap { $0 }
+                    }
+                    return [self.openCodeGoCachedStatus()].compactMap { $0 }
                 }
             }
 
@@ -164,7 +204,7 @@ struct LiveUsageDataSource {
             for await items in group {
                 out.append(contentsOf: items)
             }
-            return out.sorted { order.firstIndex(of: $0.name) ?? 99 < order.firstIndex(of: $1.name) ?? 99 }
+            return out.sortedByDisplayOrder()
         }
     }
 
@@ -182,8 +222,8 @@ struct LiveUsageDataSource {
     }
 
     func remainingPercent(fromUsed used: Double) -> Int {
-        guard used.isFinite else { return 0 }
-        return Int(max(0, min(100, 100 - used)).rounded())
+        guard used.isFinite, used < 100 else { return 0 }
+        return max(1, Int(min(100, 100 - used).rounded()))
     }
 
     /// Claude pay-as-you-go billing from the usage API's `extra_usage: { is_enabled, monthly_limit,
@@ -220,6 +260,7 @@ struct LiveUsageDataSource {
         guard status.isAvailable, !status.isStale else { return }
         let hasData = status.sessionRemainingPercent != nil
             || status.weeklyRemainingPercent != nil
+            || status.monthlyRemainingPercent != nil
             || !status.models.isEmpty
         guard hasData else { return }
 
@@ -227,8 +268,11 @@ struct LiveUsageDataSource {
         var payload: [String: Any] = ["version": 2, "savedAt": iso.string(from: status.observedAt ?? Date())]
         if let p = status.sessionRemainingPercent { payload["sessionRemainingPercent"] = p }
         if let p = status.weeklyRemainingPercent { payload["weeklyRemainingPercent"] = p }
+        if let p = status.monthlyRemainingPercent { payload["monthlyRemainingPercent"] = p }
         if let d = status.sessionResetAt { payload["sessionResetAt"] = iso.string(from: d) }
         if let d = status.weeklyResetAt { payload["weeklyResetAt"] = iso.string(from: d) }
+        if let d = status.monthlyResetAt { payload["monthlyResetAt"] = iso.string(from: d) }
+        if let sourceID = status.sourceID { payload["sourceID"] = sourceID }
         // Without the window's real length a restored snapshot falls back to "7 days", which both
         // mislabels a longer window (ChatGPT Go's ~30-day one) and rolls a lapsed reset forward by
         // the wrong step.
@@ -301,7 +345,7 @@ struct LiveUsageDataSource {
     /// all stale → a dimmed `isStale` card marked with `staleNote`, still visible so the service
     /// never vanishes. Returns nil only when the file is missing, corrupt, or past the 30-day cap.
     func loadSnapshot(for service: String, iconName: String,
-                              freshNote: String = "snapshot", staleNote: String = L("out of date")) -> ServiceStatus? {
+                              freshNote: String = "snapshot", staleNote: String = "out of date") -> ServiceStatus? {
         guard let data = try? Data(contentsOf: snapshotURL(for: service)),
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
@@ -345,6 +389,7 @@ struct LiveUsageDataSource {
         }
         let sessionReset = (root["sessionResetAt"] as? String).flatMap { parseISO8601($0) }
         let weeklyReset = (root["weeklyResetAt"] as? String).flatMap { parseISO8601($0) }
+        let monthlyReset = (root["monthlyResetAt"] as? String).flatMap { parseISO8601($0) }
         // Absent in snapshots written before this key existed — nil then, and the callers fall back
         // to the 7-day default exactly as they did before. Bounds-checked because the on-disk value
         // is untrusted: a corrupt/hand-edited number outside (6h, 366d] would trap in the
@@ -361,8 +406,10 @@ struct LiveUsageDataSource {
             sessionPct: root["sessionRemainingPercent"] as? Int, sessionReset: sessionReset,
             weeklyPct: root["weeklyRemainingPercent"] as? Int, weeklyReset: weeklyReset,
             weeklyWindowSeconds: weeklyWindow,
+            monthlyPct: root["monthlyRemainingPercent"] as? Int, monthlyReset: monthlyReset,
             models: allModels, freshNote: freshNote, staleNote: staleNote)?
             .withAccount(account).withObservedAt((root["savedAt"] as? String).flatMap(parseISO8601))
+            .withSourceID(root["sourceID"] as? String)
     }
 
     /// Standard reset periods for the quota windows both providers expose: a 5-hour session and a
@@ -372,44 +419,27 @@ struct LiveUsageDataSource {
     static let sessionResetPeriod: TimeInterval = 5 * 60 * 60
     static let weeklyResetPeriod: TimeInterval = 7 * 24 * 60 * 60
 
-    /// Classify a last-known reading by reset time. A window/model still within its reset keeps its
-    /// real percent; one whose reset has already passed has *refilled to full*, so it shows 100% with
-    /// its reset rolled forward to the next boundary — NOT blanked (which made the session vanish and
-    /// dropped the provider from the menu bar) and NOT dropped (which made per-model rows like Fable
-    /// disappear). When every row is only a refilled estimate (nothing still inside its original
-    /// window) the card is dimmed (`isStale`) so it reads as last-known rather than live. Returns nil
-    /// only when there is no data at all.
+    /// A cached window keeps its last percentage until its recorded reset. After that, its
+    /// current percentage is unknown until the provider supplies another reading.
     func staleClassifiedCard(name: String, iconName: String,
                                      sessionPct: Int?, sessionReset: Date?,
                                      weeklyPct: Int?, weeklyReset: Date?,
                                      weeklyWindowSeconds: TimeInterval? = nil,
+                                     monthlyPct: Int? = nil, monthlyReset: Date? = nil,
                                      models: [ModelStatus],
                                      freshNote: String, staleNote: String) -> ServiceStatus? {
-        guard sessionPct != nil || weeklyPct != nil || !models.isEmpty else { return nil }
+        guard sessionPct != nil || weeklyPct != nil || monthlyPct != nil || !models.isEmpty else { return nil }
         let now = Date()
-        // Roll a lapsed reset forward by the window's REAL length. Assuming 7 days would land a
-        // ~30-day window (ChatGPT Go) on a boundary it never has.
-        let weeklyPeriod = weeklyWindowSeconds ?? Self.weeklyResetPeriod
-
-        // Advance a passed reset to the next future boundary so a refilled window still shows a live
-        // countdown instead of a stale/blank one.
-        func rollForward(_ reset: Date?, _ period: TimeInterval) -> Date? {
-            guard let reset, period > 0, reset <= now else { return reset }
-            let steps = (now.timeIntervalSince(reset) / period).rounded(.down) + 1
-            return reset.addingTimeInterval(steps * period)
-        }
-        // (displayPct, displayReset, stillInWindow) for a window: in-window keeps its real number,
-        // lapsed refills to 100% with the reset rolled forward.
-        func window(_ pct: Int?, _ reset: Date?, _ period: TimeInterval) -> (pct: Int?, reset: Date?, live: Bool) {
+        func window(_ pct: Int?, _ reset: Date?) -> (pct: Int?, reset: Date?, live: Bool) {
             guard let pct else { return (nil, nil, false) }
             let live = reset.map { now < $0 } ?? true
             return live ? (pct, reset, true) : (nil, reset, false)
         }
 
-        let s = window(sessionPct, sessionReset, Self.sessionResetPeriod)
-        let w = window(weeklyPct, weeklyReset, weeklyPeriod)
-        // Keep every model row: an in-window one as-is, a lapsed (refilled) one at 100% with its weekly
-        // reset rolled forward. Value rows (billing) carry no resetting percent — pass them through.
+        let s = window(sessionPct, sessionReset)
+        let w = window(weeklyPct, weeklyReset)
+        let month = window(monthlyPct, monthlyReset)
+        // Value rows carry no resetting percentage.
         let rows = models.compactMap { m -> (row: ModelStatus, live: Bool)? in
             if m.valueText != nil { return (m, true) }
             let live = m.resetAt.map { now < $0 } ?? true
@@ -417,17 +447,14 @@ struct LiveUsageDataSource {
             return nil
         }
 
-        let anyLive = s.live || w.live || rows.contains { $0.live }
-        // A refilled window/model is an ESTIMATE (we inferred "reset → 100%", we didn't observe it), so
-        // mark the whole card `isStale` whenever anything was refilled — not only when everything is.
-        // This keeps the refill out of the notification path: reset alerts fire on `!isStale` cards only
-        // (a genuine reset is seen by a LIVE fetch, which never goes through here), so a stale card
-        // bouncing to a refilled 100 can't spam a false "weekly quota refilled" notification.
+        let anyLive = s.live || w.live || month.live || rows.contains { $0.live }
         return ServiceStatus(
             name: name, iconName: iconName,
             sessionResetAt: s.reset, weeklyResetAt: w.reset,
             sessionRemainingPercent: s.pct, weeklyRemainingPercent: w.pct,
             weeklyWindowSeconds: weeklyWindowSeconds,
+            monthlyResetAt: month.live ? month.reset : nil,
+            monthlyRemainingPercent: month.pct,
             models: rows.map(\.row),
             isAvailable: true,
             statusNote: anyLive ? freshNote : staleNote,

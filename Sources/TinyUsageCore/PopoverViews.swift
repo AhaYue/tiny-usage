@@ -10,6 +10,7 @@ struct PopoverView: View {
     /// Everything the settings side needs. Passed in rather than reached for: the view stays a
     /// view, and AppKit keeps owning the login item, the hook and the quit.
     let settings: PopoverSettings
+    @AppStorage(AppLanguage.defaultsKey) private var language = AppLanguage.system
 
     /// Which face is up. The settings live on the back of the same card — flipping to them keeps
     /// the popover one surface instead of dropping a second window on top of it.
@@ -39,7 +40,7 @@ struct PopoverView: View {
                         .opacity(showingSettings ? 0 : 1)
                         .allowsHitTesting(!showingSettings)
                     ScrollView(showsIndicators: false) {
-                        SettingsFace(settings: settings, onBack: { flip() })
+                        SettingsFace(settings: settings, language: $language, onBack: { flip() })
                             .measuringHeight { settingsHeight = $0; reportHeight() }
                     }
                     .opacity(showingSettings ? 1 : 0)
@@ -47,9 +48,11 @@ struct PopoverView: View {
                 }
             }
         }
+        .id(language)
         .containerShape(PopoverMetrics.panelShape)
         .onAppear { localCaptureState = settings.localCaptureState() }
         .onChange(of: store.isRefreshing) { _, _ in localCaptureState = settings.localCaptureState() }
+        .onChange(of: language) { _, _ in settings.languageDidChange() }
     }
 
     /// Straight swap, no animation: the settings are a place you go, not a trick the card does.
@@ -103,7 +106,8 @@ struct PopoverView: View {
 
     private static func supported(_ service: ServiceStatus) -> Bool {
         service.name == "Claude" || service.name.hasPrefix("Claude ") ||
-        service.name == "Codex" || service.name.hasPrefix("Codex ")
+        service.name == "Codex" || service.name.hasPrefix("Codex ") ||
+        service.name == OpenCodeGoConfiguration.name
     }
 
     /// Primary Claude/Codex services that returned nothing at all — no live data, no snapshot. They
@@ -112,7 +116,7 @@ struct PopoverView: View {
     /// Desktop fallback card stay hidden: their absence isn't something the user has to act on.
     static func needsSetup(_ services: [ServiceStatus]) -> [ServiceStatus] {
         services
-            .filter { ($0.name == "Claude" || $0.name == "Codex") && !$0.isAvailable && !$0.isStale }
+            .filter { serviceDisplayOrder.contains($0.name) && !$0.isAvailable && !$0.isStale }
             .sortedByDisplayOrder()
     }
 
@@ -130,14 +134,16 @@ struct PopoverView: View {
             // Each provider is its own card — the card border carries the hierarchy, so there are
             // no dividers or rails between them (design v2.9).
             VStack(spacing: 11) {
-                ForEach(visible) { service in
+                ForEach((visible + setup).sortedByDisplayOrder()) { service in
                     let recovery = claudeHelp(for: service)
-                    ServiceCard(service: service, now: now, recovery: recovery,
-                                onAuthorize: recovery == nil ? resetHint(for: service) : nil)
-                }
-                ForEach(setup) { service in
-                    SetupCard(service: service, settings: settings,
-                              recovery: claudeHelp(for: service), refreshing: store.isRefreshing)
+                    if service.isAvailable || service.isStale {
+                        ServiceCard(service: service, now: now, recovery: recovery,
+                                    onAuthorize: recovery == nil ? resetHint(for: service) : nil,
+                                    onConfigureOpenCode: service.name == OpenCodeGoConfiguration.name ? settings.configureOpenCodeGo : nil)
+                    } else {
+                        SetupCard(service: service, settings: settings, recovery: recovery,
+                                  refreshing: store.isRefreshing)
+                    }
                 }
             }
             .padding([.top, .horizontal], PopoverMetrics.cardInset)
@@ -225,10 +231,12 @@ struct PopoverSettings {
     var setMenuStyle: (Int) -> Void
     var refreshMode: () -> Int
     var setRefreshMode: (Int) -> Void
+    var languageDidChange: () -> Void = {}
     /// The one action that may show the macOS keychain dialog, after its own confirmation.
     var authorize: () -> Void
     var didAuthorize: () -> Bool
     var refresh: () -> Void
+    var configureOpenCodeGo: () -> Void = {}
     var openDataFolder: () -> Void
     var about: () -> Void
     /// False in dev builds without a feed, where the row is hidden.
@@ -242,6 +250,7 @@ struct PopoverSettings {
 /// groups were separating things nobody needed separated.
 struct SettingsFace: View {
     let settings: PopoverSettings
+    @Binding var language: AppLanguage
     let onBack: () -> Void
 
     /// Every flag here lives outside SwiftUI — a login item, a file on disk, a defaults key — so
@@ -281,10 +290,14 @@ struct SettingsFace: View {
                 pickerRow("menubar.rectangle", L("Menu bar"), nil,
                           selection: Binding(get: { flags.menuStyle }, set: { settings.setMenuStyle($0); reload() }),
                           options: MenuBarRenderer.Style.allCases.map { ($0.rawValue, $0.label) })
+                pickerRow("globe", L("Language"), nil, selection: $language,
+                          options: AppLanguage.allCases.map { ($0, $0.label) })
                 pickerRow("timer", L("Refresh rate"), RefreshMode(rawValue: flags.refreshMode)?.detail,
                           selection: Binding(get: { flags.refreshMode }, set: { settings.setRefreshMode($0); reload() }),
                           options: RefreshMode.allCases.map { ($0.rawValue, $0.label) })
                 row("arrow.clockwise", L("Refresh usage"), nil, action: settings.refresh)
+                row(OpenCodeGoConfiguration.iconName, OpenCodeGoConfiguration.name, L("Manage the key for Go quotas."), brandIcon: true,
+                    action: settings.configureOpenCodeGo)
                 row("folder", L("Open data folder"), nil, action: settings.openDataFolder)
                 if settings.canCheckForUpdates {
                     row("arrow.down.circle", L("Check for updates"), nil, action: settings.checkForUpdates)
@@ -305,8 +318,8 @@ struct SettingsFace: View {
 
     /// A setting with a few named values: the title and what it means on the left, a pop-up menu
     /// with the current value on the right — the choices are visible, not hidden behind clicks.
-    private func pickerRow(_ symbol: String, _ title: String, _ subtitle: String?,
-                           selection: Binding<Int>, options: [(Int, String)]) -> some View {
+    private func pickerRow<Value: Hashable>(_ symbol: String, _ title: String, _ subtitle: String?,
+                                           selection: Binding<Value>, options: [(Value, String)]) -> some View {
         HStack(spacing: 11) {
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .light))
@@ -316,6 +329,7 @@ struct SettingsFace: View {
                 Text(title)
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(Color.primary.opacity(0.92))
+                    .fixedSize(horizontal: true, vertical: false)
                 if let subtitle {
                     Text(subtitle)
                         .font(.system(size: 11, weight: .regular))
@@ -372,17 +386,23 @@ struct SettingsFace: View {
 
     /// One action. `shortcut` shows the key that does the same thing without opening this screen.
     private func row(_ symbol: String, _ title: String, _ subtitle: String?,
-                     shortcut: String? = nil,
+                     shortcut: String? = nil, brandIcon: Bool = false,
                      action: @escaping () -> Void) -> some View {
         Button {
             action()
             reload()
         } label: {
             HStack(spacing: 11) {
-                Image(systemName: symbol)
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(Color.primary.opacity(0.6))
-                    .frame(width: 22, height: 22)
+                Group {
+                    if brandIcon {
+                        BrandIconView(iconName: symbol, size: 15)
+                    } else {
+                        Image(systemName: symbol)
+                            .font(.system(size: 15, weight: .light))
+                    }
+                }
+                .foregroundStyle(Color.primary.opacity(0.6))
+                .frame(width: 22, height: 22)
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
@@ -629,6 +649,7 @@ struct ServiceCard: View {
     var recovery: ClaudeUsageHelp? = nil
     /// Shown as a quiet link at the bottom of a live Claude card that has no reset passes yet.
     var onAuthorize: (() -> Void)? = nil
+    var onConfigureOpenCode: (() -> Void)? = nil
 
     /// Opens the renewal-pass list. The chip already carries the count and the nearest expiry, so
     /// the list is for the dates behind them; collapsed is the resting state.
@@ -690,6 +711,14 @@ struct ServiceCard: View {
                 Label(L("Cached usage"), systemImage: "clock")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
+                if let onConfigureOpenCode, let note = service.statusNote,
+                   note == OpenCodeGoUsage.rejectedKeyNote || note == OpenCodeGoUsage.permissionNote {
+                    Text(AppLanguage.current.text(forKey: note))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    Button(L("Configure OpenCode Go"), action: onConfigureOpenCode)
+                        .controlSize(.small)
+                }
             } else if let onAuthorize {
                 Button(action: onAuthorize) {
                     Label(L("Authorize reset credits"), systemImage: "key")
@@ -779,9 +808,9 @@ struct ServiceCard: View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Image(systemName: row.symbol ?? "dollarsign.circle").font(.system(size: 11, weight: .regular))
                 .frame(width: Self.iconColumn)
-            Text(row.name)
+            Text(row.displayValueRowName)
             Spacer(minLength: 6)
-            Text(row.valueText ?? "")
+            Text(row.displayValueRowText ?? "")
                 .monospacedDigit()
                 .fixedSize()
         }
@@ -800,14 +829,18 @@ struct ServiceCard: View {
         if !panels.isEmpty {
             panels[0].plan = service.account?.plan
             panels[0].email = service.account?.email
-            panels[0].source = service.statusNote
+            panels[0].source = service.statusNote.map(AppLanguage.current.text(forKey:))
             panels[0].observedAt = service.observedAt
+            if service.name == OpenCodeGoConfiguration.name {
+                panels[0].showsAllWindows = true
+                panels[0].monthly = service.monthlyRemainingPercent.map { ($0, service.monthlyResetAt) }
+            }
         }
         return panels
     }
 
     private var quotaPanels: [PanelData] {
-        guard hasServiceQuotas else { return [] }
+        guard hasServiceQuotas || service.name == OpenCodeGoConfiguration.name else { return [] }
         return [PanelData(title: service.providerTitle, iconName: service.iconName,
                           session: service.sessionRemainingPercent.map { ($0, service.sessionResetAt) },
                           weekly: service.weeklyRemainingPercent.map { ($0, service.weeklyResetAt) },
@@ -872,7 +905,8 @@ struct ServiceCard: View {
 
     /// True when the provider reports account-level windows (Claude/Codex).
     private var hasServiceQuotas: Bool {
-        service.sessionRemainingPercent != nil || service.weeklyRemainingPercent != nil
+        service.sessionRemainingPercent != nil || service.weeklyRemainingPercent != nil ||
+        service.monthlyRemainingPercent != nil
     }
 
     /// "7d" / "30d", from the window's REAL length. nil when the provider didn't report one.
@@ -905,14 +939,17 @@ struct PanelData {
     /// Where the numbers came from ("oauth usage api", "本地状态栏" …) and when — beside the title.
     var source: String? = nil
     var observedAt: Date? = nil
+    var showsAllWindows = false
+    var monthly: (percent: Int, resetAt: Date?)? = nil
 
     /// A plan with one long window and no session (Codex Go's 30 days) shows it where the session
     /// sits — the big number, the clock and the face — instead of an empty corner above a capsule.
     func promotingLoneWindow() -> PanelData {
-        guard session == nil, let weekly else { return self }
+        guard !showsAllWindows, session == nil, let weekly else { return self }
         return PanelData(title: title, iconName: iconName, session: weekly, weekly: nil,
                          weeklyLabel: weeklyLabel, sessionFallback: weeklyWindow,
-                         weeklyWindow: weeklyWindow, gated: false, stale: stale, plan: plan, email: email)
+                         weeklyWindow: weeklyWindow, gated: false, stale: stale, plan: plan, email: email,
+                         source: source, observedAt: observedAt)
     }
 }
 
@@ -936,15 +973,15 @@ struct ProviderPanel: View {
         VStack(alignment: .leading, spacing: 15) {
             header
             VStack(alignment: .leading, spacing: 7) {
-                if let session = panel.session {
-                    quotaRow(label: sessionLabel, percent: session.percent, resetAt: session.resetAt,
-                             window: panel.sessionFallback, locked: panel.gated)
+                if panel.session != nil || panel.showsAllWindows {
+                    quotaRow(label: sessionLabel, reading: panel.session, locked: panel.gated)
                 }
-                if let weekly = panel.weekly {
-                    quotaRow(label: panel.weeklyLabel, percent: weekly.percent, resetAt: weekly.resetAt,
-                             window: panel.weeklyWindow, locked: false)
+                if panel.weekly != nil || panel.showsAllWindows {
+                    quotaRow(label: panel.weeklyLabel, reading: panel.weekly, locked: false)
                 }
-                if panel.session == nil && panel.weekly == nil {
+                if panel.showsAllWindows {
+                    quotaRow(label: L("Monthly"), reading: panel.monthly, locked: false)
+                } else if panel.session == nil && panel.weekly == nil {
                     Text(L("No quota data"))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
@@ -986,9 +1023,10 @@ struct ProviderPanel: View {
     }
 
     /// One window on one line; see `QuotaLine`.
-    private func quotaRow(label: String, percent: Int, resetAt: Date?, window: TimeInterval, locked: Bool) -> some View {
-        QuotaLine(label: label, percent: percent, resetAt: resetAt, now: now,
-                  color: locked || panel.stale ? lockedQuotaColor : quotaStatusColor(clampPct(percent)), isStale: panel.stale)
+    private func quotaRow(label: String, reading: (percent: Int, resetAt: Date?)?, locked: Bool) -> some View {
+        let color = locked || panel.stale ? lockedQuotaColor : reading.map { quotaStatusColor($0.percent) } ?? .secondary
+        return QuotaLine(label: label, percent: reading?.percent, resetAt: reading?.resetAt, now: now,
+                         color: color, isStale: panel.stale)
     }
 
 
@@ -1080,7 +1118,7 @@ extension NSColor {
 /// exact reset time is in the hover help rather than on a second line.
 struct QuotaLine: View {
     let label: String
-    let percent: Int
+    let percent: Int?
     let resetAt: Date?
     let now: Date
     /// Chosen from what's *left*, whichever number is shown — 90% used is red either way.
@@ -1090,7 +1128,7 @@ struct QuotaLine: View {
     @AppStorage("tinyusage.showRemaining") private var showRemaining = true
 
     var body: some View {
-        let value = showRemaining ? clampPct(percent) : 100 - clampPct(percent)
+        let value = MenuBarRenderer.displayedPercent(remaining: percent, showRemaining: showRemaining)
         HStack(spacing: 8) {
             Text(label)
                 .font(.system(size: 11.5, weight: .medium))
@@ -1101,12 +1139,14 @@ struct QuotaLine: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.primary.opacity(0.1))
-                    Capsule().fill(color)
-                        .frame(width: value > 0 ? max(4, geo.size.width * CGFloat(value) / 100) : 0)
+                    if let value, value > 0 {
+                        Capsule().fill(color)
+                            .frame(width: max(4, geo.size.width * CGFloat(value) / 100))
+                    }
                 }
             }
             .frame(height: 6)
-            Text("\(value)%")
+            Text(value.map { "\($0)%" } ?? "—")
                 .font(.system(size: 12.5, weight: .semibold).monospacedDigit())
                 .foregroundStyle(isStale ? .secondary : color)
                 .frame(width: 40, alignment: .trailing)
@@ -1192,6 +1232,13 @@ struct SetupCard: View {
             }
             if let recovery {
                 recovery
+            } else if service.name == OpenCodeGoConfiguration.name {
+                Text(AppLanguage.current.text(forKey: service.statusNote ?? "OpenCode Go usage is temporarily unavailable"))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(L("Configure OpenCode Go"), action: settings.configureOpenCodeGo)
+                    .controlSize(.small)
             } else {
                 Text(L("Waiting for Codex local usage to update."))
                     .font(.system(size: 11))

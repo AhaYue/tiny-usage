@@ -33,4 +33,22 @@ final class LocalizationTests: XCTestCase {
         // copied from the sources as is, so only this comparison needs to ignore case.
         XCTAssertEqual(Set(Bundle.tinyUsage.localizations.map { $0.lowercased() }).subtracting(["base"]), ["en", "zh-hans"])
     }
+
+    func testExplicitLanguageUsesItsOwnTableAndPreservesInterpolation() {
+        let count = 7
+        XCTAssertEqual(AppLanguage.english.text("Follow System"), "Follow System")
+        XCTAssertEqual(AppLanguage.simplifiedChinese.text("Follow System"), "跟随系统")
+        XCTAssertEqual(AppLanguage.english.text("\(count) min ago"), "7 min ago")
+        XCTAssertEqual(AppLanguage.simplifiedChinese.text("\(count) min ago"), "更新于 7 分钟前")
+        XCTAssertEqual(AppLanguage.system.text("Language"), String(localized: "Language", bundle: .tinyUsage))
+    }
+
+    func testCachedBillingLabelsFollowTheCurrentLanguage() {
+        for language in [AppLanguage.english, .simplifiedChinese] {
+            let balance = ModelStatus(name: language.text("Credit balance"), remainingPercent: 0,
+                                      resetAt: nil, valueText: String(format: language.text("%@ credits"), "12.5"))
+            XCTAssertEqual(balance.displayValueRowName, L("Credit balance"))
+            XCTAssertEqual(balance.displayValueRowText, String(format: L("%@ credits"), "12.5"))
+        }
+    }
 }

@@ -28,12 +28,12 @@ enum DemoData {
                           sessionRemainingPercent: 83, weeklyRemainingPercent: 99, weeklyWindowSeconds: 604_800,
                           models: [ModelStatus(name: "Fable", remainingPercent: 100,
                                                resetAt: now.addingTimeInterval(6 * 86_400 + 22 * 3600), window: .weekly)] + claudeGrants,
-                          isAvailable: true, statusNote: L("Demo data"),
+                          isAvailable: true, statusNote: "Demo data",
                           account: AccountInfo(plan: "Max", email: nil), observedAt: now),
             ServiceStatus(name: "Codex", iconName: "codex",
                           sessionResetAt: now.addingTimeInterval(4 * 3600 + 34 * 60), weeklyResetAt: now.addingTimeInterval(4 * 86_400 + 17 * 3600),
                           sessionRemainingPercent: 89, weeklyRemainingPercent: 41, weeklyWindowSeconds: 604_800,
-                          models: codexGrants, isAvailable: true, statusNote: L("Demo data"),
+                          models: codexGrants, isAvailable: true, statusNote: "Demo data",
                           account: AccountInfo(plan: "Plus", email: nil), observedAt: now)
         ]
     }
@@ -54,9 +54,22 @@ enum PreviewFixtures {
     }
 
     static func store(_ services: [ServiceStatus] = DemoData.services()) -> UsageStore {
-        let store = UsageStore()
-        store.services = services
-        return store
+        UsageStore(services: services)
+    }
+
+    static func openCodeGo(now: Date = Date(), cached: Bool = false) -> ServiceStatus {
+        ServiceStatus(name: OpenCodeGoConfiguration.name, iconName: OpenCodeGoConfiguration.iconName,
+                      sessionResetAt: cached ? nil : now.addingTimeInterval(45 * 60),
+                      weeklyResetAt: now.addingTimeInterval(39 * 3600),
+                      sessionRemainingPercent: cached ? nil : 65, weeklyRemainingPercent: 30,
+                      weeklyWindowSeconds: 7 * 86_400, monthlyResetAt: now.addingTimeInterval(19 * 86_400),
+                      monthlyRemainingPercent: 78, models: [], isAvailable: true,
+                      statusNote: cached ? "snapshot" : "OpenCode Go usage", isStale: cached,
+                      observedAt: cached ? now.addingTimeInterval(-3600) : now)
+    }
+
+    static func settingsFace() -> some View {
+        SettingsFace(settings: settings(), language: .constant(AppLanguage.current), onBack: {})
     }
 
     static let emptyClaude = ServiceStatus(name: "Claude", iconName: "claude", sessionResetAt: nil,
@@ -77,7 +90,7 @@ enum PreviewFixtures {
             ("waiting-first-data", emptyClaude, .waiting),
             ("waiting-update", emptyClaude, .outdated),
             ("saved-data", savedClaude(now: now), .waiting),
-            ("login-expired", emptyClaude.withStatusNote(L("token expired — open Claude Code")), .waiting),
+            ("login-expired", emptyClaude.withStatusNote("token expired — open Claude Code"), .waiting),
             ("rate-limited", emptyClaude.withStatusNote("claude http 429"), .waiting)
         ]
     }
@@ -114,7 +127,7 @@ enum PreviewRenderer {
         // The settings face (the back of the card).
         if wanted("settings") {
             for dark in [true, false] {
-                snapshot(SettingsFace(settings: PreviewFixtures.settings(), onBack: {}).padding(.vertical, 4)
+                snapshot(PreviewFixtures.settingsFace().padding(.vertical, 4)
                             .background(PopoverBackdrop()),
                          dark: dark, to: directory.appendingPathComponent("settings-\(dark ? "dark" : "light").png"))
             }
@@ -139,10 +152,20 @@ enum PreviewRenderer {
             }
         }
         if wanted("menu-bar") {
-            let image = MenuBarRenderer.image(services: store.services, style: .both, remaining: true, now: now)
+            let services = store.services + [PreviewFixtures.openCodeGo(now: now)]
+            let image = MenuBarRenderer.image(services: services, style: .both, remaining: true, now: now)
             if let tiff = image.tiffRepresentation,
                let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
                 try? png.write(to: directory.appendingPathComponent("menu-bar.png"))
+            }
+        }
+        for cached in [false, true] {
+            let name = cached ? "opencode-cached" : "opencode-panel"
+            guard wanted(name) else { continue }
+            let store = PreviewFixtures.store(DemoData.services(now: now) + [PreviewFixtures.openCodeGo(now: now, cached: cached)])
+            for dark in [true, false] {
+                snapshot(PreviewFixtures.panel(store), dark: dark,
+                         to: directory.appendingPathComponent("\(name)-\(dark ? "dark" : "light").png"))
             }
         }
     }

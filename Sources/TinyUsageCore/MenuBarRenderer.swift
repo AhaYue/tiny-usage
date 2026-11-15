@@ -111,8 +111,13 @@ enum MenuBarRenderer {
             let five = displayedPercent(remaining: service.sessionRemainingPercent, showRemaining: remaining).map { "\($0)%" } ?? L("unknown")
             let long = displayedPercent(remaining: service.weeklyRemainingPercent, showRemaining: remaining).map { "\($0)%" } ?? L("unknown")
             let name = service.titleWithAccount
-            let line = remaining ? L("\(name): 5h \(five) left, long-term \(long) left")
+            var line = remaining ? L("\(name): 5h \(five) left, long-term \(long) left")
                                  : L("\(name): 5h \(five) used, long-term \(long) used")
+            if service.name == OpenCodeGoConfiguration.name {
+                let month = displayedPercent(remaining: service.monthlyRemainingPercent, showRemaining: remaining)
+                    .map { "\($0)%" } ?? L("unknown")
+                line += " · " + (remaining ? L("Monthly \(month) left") : L("Monthly \(month) used"))
+            }
             return service.isStale ? line + " · " + L("out of date") : line
         }.joined(separator: "\n")
     }

@@ -9,8 +9,12 @@ private final class QuotaPanel: NSPanel {
 
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
-    override public init() { super.init() }
-    private let store = UsageStore()
+    override public init() {
+        demo = ["--demo", "--render-preview", "--smoke-test"].contains { CommandLine.arguments.contains($0) }
+        store = UsageStore(services: demo ? DemoData.services() : nil)
+        super.init()
+    }
+    private let store: UsageStore
     private var statusItem: NSStatusItem?
     private var panel: QuotaPanel?
     private var timer: Timer?
@@ -22,7 +26,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// When the background tick last read local sources — paces it to `RefreshMode.localInterval`.
     private var lastAutoRefresh: Date?
     private var updater: AppUpdater?
-    private let demo = CommandLine.arguments.contains("--demo") || CommandLine.arguments.contains("--render-preview") || CommandLine.arguments.contains("--smoke-test")
+    private let demo: Bool
     private var style: MenuBarRenderer.Style {
         MenuBarRenderer.Style(rawValue: UserDefaults.standard.integer(forKey: "tinyusage.menuStyle")) ?? .bars
     }
@@ -31,7 +35,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     public func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.register(defaults: ["tinyusage.showRemaining": true, "tinyusage.menuStyle": 0])
         NSApp.setActivationPolicy(.accessory)
-        if demo { store.services = DemoData.services() }
         if let index = CommandLine.arguments.firstIndex(of: "--render-preview"),
            CommandLine.arguments.indices.contains(index + 1) {
             PreviewRenderer.render(store: store, to: URL(fileURLWithPath: CommandLine.arguments[index + 1]))
@@ -124,6 +127,56 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         UserDefaults.standard.set(true, forKey: Self.didAuthorizeKey)
         store.refresh(userInitiated: true, force: true)
+    }
+
+    private func configureOpenCodeGo() {
+        guard !demo else { return }
+        hidePanel()
+        NSApp.activate(ignoringOtherApps: true)
+
+        let dialog = NSAlert()
+        dialog.messageText = L("Configure OpenCode Go")
+        dialog.informativeText = L("Use the key already connected in OpenCode, or enter a personal key from the Go subscription’s workspace.")
+        dialog.addButton(withTitle: L("Use OpenCode key"))
+        dialog.addButton(withTitle: L("Enter personal key"))
+        dialog.addButton(withTitle: L("Cancel")).keyEquivalent = "\u{1b}"
+        let connected = OpenCodeGoConfiguration.mode != .disabled
+        if connected {
+            dialog.addButton(withTitle: L("Disconnect")).hasDestructiveAction = true
+        }
+        dialog.addButton(withTitle: L("Open billing"))
+        let answer = dialog.runModal().rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+        switch (answer, connected) {
+        case (0, _): updateOpenCodeGo(.reuse)
+        case (1, _):
+            let keyDialog = NSAlert()
+            keyDialog.messageText = L("Enter an OpenCode Go key")
+            keyDialog.informativeText = L("The key is stored in your Mac’s keychain.")
+            let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+            field.placeholderString = L("Personal API key")
+            keyDialog.accessoryView = field
+            keyDialog.addButton(withTitle: L("Save"))
+            keyDialog.addButton(withTitle: L("Cancel"))
+            keyDialog.window.initialFirstResponder = field
+            if keyDialog.runModal() == .alertFirstButtonReturn {
+                updateOpenCodeGo(.personalKey, personalKey: field.stringValue)
+            }
+        case (3, true): updateOpenCodeGo(.disabled)
+        case (4, true), (3, false):
+            if let url = URL(string: "https://opencode.ai/console") { NSWorkspace.shared.open(url) }
+            return
+        default: break
+        }
+        showPanel()
+    }
+
+    private func updateOpenCodeGo(_ mode: OpenCodeGoConfiguration.Mode, personalKey: String? = nil) {
+        do {
+            try OpenCodeGoConfiguration.setMode(mode, personalKey: personalKey)
+            store.openCodeConfigurationChanged()
+        } catch {
+            alert(L("Configure OpenCode Go"), error.localizedDescription)
+        }
     }
 
     private func startTimer() {
@@ -252,9 +305,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             setMenuStyle: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.menuStyle"); self?.renderTitle() },
             refreshMode: { RefreshMode.current.rawValue },
             setRefreshMode: { UserDefaults.standard.set($0, forKey: RefreshMode.defaultsKey) },
+            languageDidChange: { [weak self] in
+                guard let self else { return }
+                self.renderTitle()
+                if let aboutWindow = self.aboutWindow { self.localizeAboutWindow(aboutWindow) }
+            },
             authorize: { [weak self] in self?.authorize() },
             didAuthorize: { UserDefaults.standard.bool(forKey: Self.didAuthorizeKey) },
             refresh: { [weak self] in if self?.demo == false { self?.store.refresh(force: true) } },
+            configureOpenCodeGo: { [weak self] in self?.configureOpenCodeGo() },
             openDataFolder: {
                 try? FileManager.default.createDirectory(at: LiveUsageDataSource.supportDirectory, withIntermediateDirectories: true)
                 NSWorkspace.shared.open(LiveUsageDataSource.supportDirectory)
@@ -271,19 +330,22 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showAbout() {
         hidePanel()
         if aboutWindow == nil {
-            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 560),
                                   styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-            window.title = L("About Tiny Usage")
             window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: AboutView(
-                version: version, hookWired: { ClaudeStatusLineHook.isWired() },
-                setHook: { [weak self] in self?.setClaudeHook($0) }))
+            localizeAboutWindow(window)
             window.center()
             aboutWindow = window
         }
         NSApp.activate(ignoringOtherApps: true)
         aboutWindow?.makeKeyAndOrderFront(nil)
+    }
+    private func localizeAboutWindow(_ window: NSWindow) {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
+        window.title = L("About Tiny Usage")
+        window.contentView = NSHostingView(rootView: AboutView(
+            version: version, hookWired: { ClaudeStatusLineHook.isWired() },
+            setHook: { [weak self] in self?.setClaudeHook($0) }))
     }
     private func alert(_ title: String, _ detail: String) {
         let alert = NSAlert()

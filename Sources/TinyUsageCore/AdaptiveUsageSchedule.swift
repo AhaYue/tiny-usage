@@ -16,6 +16,11 @@ struct AdaptiveUsageSchedule {
         entries = defaults.data(forKey: key).flatMap { try? JSONDecoder().decode([String: Entry].self, from: $0) } ?? [:]
     }
 
+    mutating func remove(_ name: String) {
+        guard entries.removeValue(forKey: name) != nil else { return }
+        persist()
+    }
+
     func skipped(now: Date, manual: Bool) -> Set<String> {
         Set(entries.compactMap { name, entry in
             if let cooldown = entry.cooldown, cooldown > now { return name }
@@ -26,7 +31,8 @@ struct AdaptiveUsageSchedule {
     mutating func record(_ status: ServiceStatus, now: Date, mode: RefreshMode = .auto) {
         let previous = entries[status.name]
         let fingerprint = [String(describing: status.sessionRemainingPercent), String(describing: status.weeklyRemainingPercent),
-                           String(describing: status.sessionResetAt), String(describing: status.weeklyResetAt)]
+                           String(describing: status.monthlyRemainingPercent), String(describing: status.sessionResetAt),
+                           String(describing: status.weeklyResetAt), String(describing: status.monthlyResetAt)]
             .joined(separator: "|") + status.models.map { "\($0.name):\($0.remainingPercent):\($0.valueText ?? ""):\($0.resetAt?.timeIntervalSince1970 ?? 0)" }.joined(separator: "|")
         let changed = previous?.fingerprint != fingerprint
         // Changed data snaps back to the floor; steady data doubles towards the ceiling. The floor
@@ -37,10 +43,14 @@ struct AdaptiveUsageSchedule {
         var cooldown = previous?.cooldown.flatMap { $0 > now ? $0 : nil }
         if let hint = status.cooldownHint { cooldown = hint > 0 ? now.addingTimeInterval(hint) : nil }
         var next = now.addingTimeInterval(interval)
-        for reset in [status.sessionResetAt, status.weeklyResetAt].compactMap({ $0 }) where mode.refreshesAtReset && reset > now {
+        for reset in status.quotaResetDates where mode.refreshesAtReset && reset > now {
             next = min(next, reset.addingTimeInterval(2))
         }
         entries[status.name] = Entry(next: next, cooldown: cooldown, interval: interval, fingerprint: fingerprint)
+        persist()
+    }
+
+    private func persist() {
         if let data = try? JSONEncoder().encode(entries) { defaults.set(data, forKey: key) }
     }
 

@@ -9,7 +9,7 @@ import SwiftUI
     PreviewFixtures.panel(PreviewFixtures.store([PreviewFixtures.emptyClaude]), capture: .waiting)
 }
 #Preview("设置") {
-    ScrollView { SettingsFace(settings: PreviewFixtures.settings(), onBack: {}) }
+    ScrollView { PreviewFixtures.settingsFace() }
         .frame(width: PopoverMetrics.width, height: 620)
         .background(PopoverBackdrop())
 }
@@ -22,5 +22,11 @@ import SwiftUI
 #Preview("关于") { AboutView(version: "预览").frame(width: 460, height: 560) }
 #Preview("面板 · 缓存用量") {
     PreviewFixtures.panel(PreviewFixtures.store([PreviewFixtures.savedClaude()]), capture: .waiting)
+}
+#Preview("面板 · OpenCode Go") {
+    PreviewFixtures.panel(PreviewFixtures.store(DemoData.services() + [PreviewFixtures.openCodeGo()]))
+}
+#Preview("OpenCode Go · 缓存用量") {
+    PreviewFixtures.panel(PreviewFixtures.store([PreviewFixtures.openCodeGo(cached: true)]))
 }
 #endif

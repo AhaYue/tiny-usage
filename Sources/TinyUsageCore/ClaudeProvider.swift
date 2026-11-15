@@ -4,6 +4,8 @@ import Security
 import LocalAuthentication
 
 extension LiveUsageDataSource {
+    typealias ClaudeUsageRequest = @Sendable (URLRequest) async throws -> (Data, URLResponse)
+
     /// Claude's cards. Claude Code's login comes first: it is the account the user works in, and its
     /// profile names the e-mail and plan. Claude.app's session serves that same card when the app is
     /// signed in to the same organization — it is the one source of the reset passes, and it never
@@ -15,9 +17,10 @@ extension LiveUsageDataSource {
     /// off the network or quiet. `userInitiated` (the explicit Authorize action, nothing else) only
     /// lets the granting reads show the macOS dialog: Claude Safe Storage first, whose grant sticks,
     /// and Claude Code's own item only when the app's session doesn't already cover this account.
-    func fetchClaudeCards(userInitiated: Bool) async -> [ServiceStatus] {
+    func fetchClaudeCards(userInitiated: Bool, cliUsage: ClaudeCLIUsage = .shared,
+                          requestUsage: ClaudeUsageRequest = { try await URLSession.shared.data(for: $0) }) async -> [ServiceStatus] {
         let cli = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
-        if let org = cli?.org { noteClaudeAccount(org) }
+        if let org = cli?.org { noteClaudeAccount(org, profileID: cli?.id) }
 
         let desktop = await fetchClaudeDesktopWebUsage(userInitiated: userInitiated, cliOrg: cli?.org)
         var main: ServiceStatus
@@ -25,18 +28,24 @@ extension LiveUsageDataSource {
         if let desktop, desktop.sameAccount {
             // The app is on the CLI's account: one card, and it carries the reset passes.
             try? FileManager.default.removeItem(at: snapshotURL(for: Self.claudeDesktopCardName))
-            main = desktop.status
+            main = desktop.status.withAccount(cli)
         } else {
-            main = await fetchClaude(userInitiated: userInitiated, cliOrg: cli?.org)
+            main = await fetchClaude(userInitiated: userInitiated, account: cli, cliUsage: cliUsage, requestUsage: requestUsage)
             separate = desktop?.status
             if separate == nil, cli == nil, !main.isAvailable { separate = await fetchClaudeDesktopOAuthUsage() }
             if separate == nil { separate = claudeOtherAccountSnapshot(cliOrg: cli?.org) }
         }
+        let current = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
+        guard current?.id == cli?.id else {
+            if let org = current?.org { noteClaudeAccount(org, profileID: current?.id) }
+            return [claudePrimarySnapshot(account: current)]
+        }
+        if desktop?.sameAccount == true { saveSnapshot(main) }
         if cli?.org != nil, !main.models.contains(where: { $0.groupLabel == ModelStatus.renewalCreditGroup }),
            let cached = readClaudeUsageCache(maxAge: 24 * 3600) {
             let grants = claudeResetGrantRows(cached)
             if !grants.isEmpty {
-                main = main.withModels(main.models + grants).withStatusNote(L("Quota updated · reset credits from last capture"))
+                main = main.withModels(main.models + grants).withStatusNote("Quota updated · reset credits from last capture")
             }
         }
         return [main.withAccount(cli)] + [separate].compactMap { $0 }
@@ -79,25 +88,18 @@ extension LiveUsageDataSource {
                            id: "\(user ?? "-")|\(org ?? "-")", org: org)
     }
 
-    /// Claude Code's own login: the usage cache, the statusLine hook, then its OAuth token.
-    /// `userInitiated` gates whether this fetch may read Claude Code's *own* keychain item — the
-    /// only source that pops the macOS permission prompt, because Claude Code resets the item's ACL
-    /// (wiping our "Always Allow") every time it rotates its token. A background tick passes `false`
-    /// and stays on prompt-free sources (usage cache, the on-disk credential file, Tiny Usage's own token
-    /// cache); only the explicit Authorize action passes `true` and may read that item.
-    /// Any failure lands in `claudeFailure`: the fresh hook, then the cache and snapshot.
-    func fetchClaude(userInitiated: Bool, cliOrg: String?) async -> ServiceStatus {
-
-        // When Claude Code's prompt-free statusLine hook is fresh it already carries the live
-        // session/weekly numbers, so a routine open must NOT reach for the prompting keychain read.
-        // Claude Code wipes its item's ACL on every token refresh, so our "Always Allow" doesn't
-        // survive — a prompting read would then re-pop the dialog every few hours (once per refresh).
-        // Gate the prompt behind "no fresh hook": while the hook covers us we do silent reads only, so
-        // the keychain (and its dialog) is touched solely when the hook can't (Claude Code idle).
-
+    /// Only an explicit Authorize action permits the interactive credential read. Otherwise a failed
+    /// OAuth read falls through to the hook, Claude Code's noninteractive query, and a saved reading.
+    private func fetchClaude(userInitiated: Bool, account: AccountInfo?, cliUsage: ClaudeCLIUsage,
+                             requestUsage: ClaudeUsageRequest) async -> ServiceStatus {
+        func failure(_ note: String, staleNote: String = "out of date", expired: Bool = false,
+                     allowCLI: Bool = true) async -> ServiceStatus {
+            await claudeFailure(note: note, staleNote: staleNote, expired: expired, account: account,
+                                cliUsage: allowCLI ? cliUsage : nil)
+        }
         // Reuse the in-memory token while it's comfortably valid, so the keychain — and its macOS
         // permission prompt — is touched only at launch and around token expiry, not every refresh.
-        var tokenInfo = await Self.claudeTokenCache.get()
+        var tokenInfo = await Self.claudeTokenCache.get(for: account?.id)
         let needsKeychain = tokenInfo.map { $0.expiresAt.map { $0.timeIntervalSinceNow <= 300 } ?? false } ?? true
 
         if needsKeychain {
@@ -105,9 +107,9 @@ extension LiveUsageDataSource {
                 // No prompt-free source had a usable token. The Authorize action in Settings
                 // allows an interactive read of Claude Code's keychain item.
                 let note = userInitiated
-                    ? L("claude token missing")
-                    : L("authorize in Settings to read the Claude credential")
-                return claudeFailure(note: note)
+                    ? "claude token missing"
+                    : "authorize in Settings to read the Claude credential"
+                return await failure(note)
             }
             tokenInfo = read
 
@@ -124,17 +126,17 @@ extension LiveUsageDataSource {
                 // after Claude Code wrote fresh hook numbers. We make NO network call with a dead token,
                 // so there's nothing to rate-limit; fall straight to claudeFailure, which reads the fresh
                 // hook every tick and shows live session/weekly numbers without a prompt.
-                let note = L("token expired — open Claude Code")
-                return claudeFailure(note: note, staleNote: note, expired: true)
+                let note = "token expired — open Claude Code"
+                return await failure(note, staleNote: note, expired: true)
             }
-            await Self.claudeTokenCache.set(tokenInfo)
+            await Self.claudeTokenCache.set(read, for: account?.id)
             // Mirror the access token into Tiny Usage's own keychain item so the next background tick can
             // reuse it without prompting (see cacheClaudeToken — access token only, no refresh).
             if let tokenInfo { cacheClaudeToken(tokenInfo) }
         }
 
         guard let token = tokenInfo else {
-            return claudeFailure(note: L("claude token missing"))
+            return await failure("claude token missing")
         }
 
         var req = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!, timeoutInterval: 10)
@@ -142,9 +144,9 @@ extension LiveUsageDataSource {
         req.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await requestUsage(req)
             guard let http = response as? HTTPURLResponse else {
-                return claudeFailure(note: "claude no http response")
+                return await failure("claude no http response")
             }
             guard 200 ... 299 ~= http.statusCode else {
                 // A rejected token is likely stale (rotated out by Claude Code); drop both caches so
@@ -152,60 +154,98 @@ extension LiveUsageDataSource {
                 // Tiny Usage's own cache is load-bearing in the background: the keychain that holds a fresh
                 // token is gated to user actions, so a kept-but-dead cache would 401 on every tick.
                 if http.statusCode == 401 || http.statusCode == 403 {
-                    await Self.claudeTokenCache.set(nil)
+                    await Self.claudeTokenCache.clear(for: account?.id)
                     deleteCachedClaudeToken()
                 }
                 // Back off on rate limiting so we stop pounding a 429ing endpoint.
                 let cooldown: TimeInterval? = http.statusCode == 429 ? (retryAfterSeconds(http) ?? 15 * 60) : ((http.statusCode == 401 || http.statusCode == 403) ? 1800 : nil)
-                return claudeFailure(note: "claude http \(http.statusCode)").withCooldownHint(cooldown)
+                return (await failure("claude http \(http.statusCode)", allowCLI: http.statusCode != 429)).withCooldownHint(cooldown)
             }
             guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   Self.claudeHasQuota(root) else {
-                return claudeFailure(note: "claude response parse fail")
+                return await failure("claude response parse fail")
+            }
+            guard !Task.isCancelled,
+                  Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)?.id == account?.id else {
+                return unavailableService(name: "Claude", iconName: "claude", models: [])
             }
             writeClaudeUsageCache(data)
             if Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)?.plan == nil {
                 await rememberClaudePlan(token.accessToken)
             }
+            let refreshedAccount = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
+            guard refreshedAccount?.id == account?.id else { return unavailableService(name: "Claude", iconName: "claude", models: []) }
             let status = buildClaudeStatus(from: root, note: "oauth usage api")
-                .withAccount(Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile))
+                .withAccount(refreshedAccount)
                 .withObservedAt(Date())
             saveSnapshot(status)
             return status.withCooldownHint(0)   // live success → clear any cooldown
         } catch {
-            return claudeFailure(note: "claude request failed")
+            return await failure("claude request failed")
         }
     }
 
-    /// Claude's live fetch failed — show last-known data instead of vanishing: the still-valid
-    /// 24h usage cache, else the persisted snapshot (dimmed when its windows have reset), else
-    /// the hidden unavailable card (only when nothing was ever cached).
-    private func claudeFailure(note: String, staleNote: String = L("out of date"),
-                               expired: Bool = false) -> ServiceStatus {
-        // The recent statusLine hook supplies live session and weekly numbers without a token.
-        // Prefer it to the 24h cache and snapshot when a live fetch fails.
+    private func claudeFailure(note: String, staleNote: String, expired: Bool,
+                               account: AccountInfo?, cliUsage: ClaudeCLIUsage?) async -> ServiceStatus {
+        let profile = ClaudeStatusLineHook.claudeConfigFile
+        guard !Task.isCancelled, Self.claudeAccount(configFile: profile)?.id == account?.id else {
+            return unavailableService(name: "Claude", iconName: "claude", models: [])
+        }
         if let hook = readClaudeHookUsage(maxAge: 30 * 60) {
             return claudeCardFromHook(hook)
         }
-        let card = claudeLastKnown(note: note, staleNote: staleNote)
+        if let cliUsage, let account, let accountID = account.id {
+            if let reading = await cliUsage.read(accountID: accountID, configDirectory: ClaudeStatusLineHook.claudeDir,
+                                                  home: Self.userHome,
+                                                  currentAccountID: { Self.claudeAccount(configFile: profile)?.id }),
+               !Task.isCancelled, Self.claudeAccount(configFile: profile)?.id == accountID {
+                func remaining(_ window: ClaudeCLIUsage.Window) -> Int {
+                    window.used == 100 ? 0 : max(1, remainingPercent(fromUsed: window.used))
+                }
+                let status = ServiceStatus(name: "Claude", iconName: "claude",
+                                           sessionResetAt: reading.session?.resetAt, weeklyResetAt: reading.weekly?.resetAt,
+                                           sessionRemainingPercent: reading.session.map(remaining),
+                                           weeklyRemainingPercent: reading.weekly.map(remaining),
+                                           models: [], isAvailable: true, statusNote: "Claude Code /usage", account: account,
+                                           observedAt: reading.observedAt)
+                saveSnapshot(status)
+                return status
+            }
+        }
+        guard !Task.isCancelled, Self.claudeAccount(configFile: profile)?.id == account?.id else {
+            return unavailableService(name: "Claude", iconName: "claude", models: [])
+        }
+        let card = claudeLastKnown(note: note, staleNote: staleNote, account: account)
         // An expired login can't refresh these numbers until it is renewed: grey, so opening Tiny Usage
         // renews it, however much of the windows is still left.
         return expired && card.isAvailable ? card.markedStale(staleNote) : card
     }
 
-    private func claudeLastKnown(note: String, staleNote: String) -> ServiceStatus {
-        // Recent cache → normal card (seed a snapshot so the cooldown/skip path can serve it too).
-        // This is a failure fallback, so reset-classify it (`live: false`): a window that refilled
-        // since this cache was written shouldn't show a phantom percent.
+    func claudePrimarySnapshot(account: AccountInfo?) -> ServiceStatus {
+        loadClaudePrimarySnapshot(account: account, staleNote: "out of date")
+            ?? unavailableService(name: "Claude", iconName: "claude", models: []).withAccount(account)
+    }
+
+    private func loadClaudePrimarySnapshot(account: AccountInfo?, staleNote: String) -> ServiceStatus? {
+        guard let snapshot = loadSnapshot(for: "Claude", iconName: "claude", staleNote: staleNote),
+              snapshot.account?.id == account?.id,
+              snapshot.account?.org == account?.org else { return nil }
+        return snapshot
+    }
+
+    private func claudeLastKnown(note: String, staleNote: String, account: AccountInfo?) -> ServiceStatus {
+        let snapshot = loadClaudePrimarySnapshot(account: account, staleNote: staleNote)
+        let cacheDate = (try? claudeUsageCacheURL().resourceValues(forKeys: [.contentModificationDateKey]))?
+            .contentModificationDate
+        if let snapshot, let observed = snapshot.observedAt, observed > (cacheDate ?? .distantPast) {
+            return snapshot
+        }
+        // Classify the cached windows by their reset times when the live query failed.
         if let cached = readClaudeUsageCache(maxAge: 24 * 60 * 60) {
             let status = buildClaudeStatus(from: cached, note: note, live: false)
-            return status
+            return status.withObservedAt(cacheDate)
         }
-        // Persisted snapshot, else an older cache trusted by reset time (windows still within their
-        // reset show dimmed; refilled windows are blanked) — seeded as a snapshot for next time.
-        if let snap = loadSnapshot(for: "Claude", iconName: "claude", staleNote: staleNote) {
-            return snap
-        }
+        if let snapshot { return snapshot }
         if let stale = claudeCardFromStaleCache(staleNote: staleNote) {
             return stale
         }
@@ -505,8 +545,18 @@ extension LiveUsageDataSource {
     /// run off the main thread.
     private actor ClaudeTokenCache {
         private var token: ClaudeToken?
-        func get() -> ClaudeToken? { token }
-        func set(_ value: ClaudeToken?) { token = value }
+        private var accountID: String?
+
+        func get(for id: String?) -> ClaudeToken? { accountID == id ? token : nil }
+
+        func set(_ value: ClaudeToken, for id: String?) {
+            accountID = id
+            token = value
+        }
+
+        func clear(for id: String?) {
+            if accountID == id { token = nil }
+        }
     }
     private static let claudeTokenCache = ClaudeTokenCache()
 
@@ -546,6 +596,7 @@ extension LiveUsageDataSource {
     func readClaudeHookUsage(maxAge: TimeInterval, path: String = ClaudeStatusLineHook.usagePath)
         -> (five: (used: Double, reset: Date?)?, seven: (used: Double, reset: Date?)?)? {
         let now = Date()
+        let accountChange = path == ClaudeStatusLineHook.usagePath ? claudeAccountMarker().dropFirst(2).first.flatMap(Double.init) : nil
         for candidate in [URL(fileURLWithPath: path)] {
             guard let vals = try? candidate.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
                   let mtime = vals.contentModificationDate, (vals.fileSize ?? 0) <= 1_048_576,
@@ -554,7 +605,8 @@ extension LiveUsageDataSource {
                   let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let parsed = Self.parseHookRateLimits(root) else { continue }
             let captured = Self.doubleFromJSON(root["captured_at"]).map(Date.init(timeIntervalSince1970:)) ?? mtime
-            guard now.timeIntervalSince(captured) >= -60, now.timeIntervalSince(captured) <= maxAge else { continue }
+            guard now.timeIntervalSince(captured) >= -60, now.timeIntervalSince(captured) <= maxAge,
+                  accountChange.map({ min(captured, mtime).timeIntervalSince1970 > $0 }) != false else { continue }
             let five = parsed.five.flatMap { $0.reset.map { $0 > now } == false ? nil : $0 }
             let seven = parsed.seven.flatMap { $0.reset.map { $0 > now } == false ? nil : $0 }
             if five != nil || seven != nil { return (five, seven) }
@@ -658,7 +710,7 @@ extension LiveUsageDataSource {
         }
 
         if let hook { return claudeExtraCardFromHook(hook, name: name, path: hookPath) }
-        let note = expired ? L("token expired — open Claude Code") : L("out of date")
+        let note = expired ? "token expired — open Claude Code" : "out of date"
         let snapshot = loadSnapshot(for: name, iconName: "claude", staleNote: note)
         // An expired login can't refresh these numbers: grey, so opening Tiny Usage renews it.
         return (expired ? snapshot?.markedStale(note) : snapshot)
@@ -675,7 +727,7 @@ extension LiveUsageDataSource {
             sessionRemainingPercent: hook.five.map { remainingPercent(fromUsed: $0.used) },
             weeklyRemainingPercent: hook.seven.map { remainingPercent(fromUsed: $0.used) },
             models: loadSnapshot(for: name, iconName: "claude")?.models ?? [],
-            isAvailable: true, statusNote: L("Local status line · extras from last capture"), observedAt: hookObservedAt(path: path))
+            isAvailable: true, statusNote: "Local status line · extras from last capture", observedAt: hookObservedAt(path: path))
     }
 
     static func claudePlanKey(_ org: String) -> String { "claude.plan.\(org)" }
@@ -757,7 +809,7 @@ extension LiveUsageDataSource {
             || k == "seven_day" || k.hasPrefix("seven_day_") { root.removeValue(forKey: k) }
         if let five = hook.five { root["five_hour"] = windowDict(five) }
         if let seven = hook.seven { root["seven_day"] = windowDict(seven) }
-        return buildClaudeStatus(from: root, note: L("Local status line · extras from last API capture"), live: true)
+        return buildClaudeStatus(from: root, note: "Local status line · extras from last API capture", live: true)
             .withObservedAt(hookObservedAt())
     }
 
@@ -809,18 +861,30 @@ extension LiveUsageDataSource {
     ///
     /// The id is the organization UUID: Claude Code's profile (`.claude.json`) names it, and so does
     /// Claude.app's session, so a switch made through either is caught.
-    func noteClaudeAccount(_ accountID: String) {
+    func noteClaudeAccount(_ accountID: String, profileID: String? = nil) {
         let url = claudeAccountFileURL()
-        let previous = try? String(contentsOf: url, encoding: .utf8)
-        if let previous, previous != accountID {
+        let parts = claudeAccountMarker()
+        let previousOrg = parts.first
+        let previousProfile = parts.dropFirst().first.flatMap { $0.isEmpty ? nil : $0 }
+        let profileChanged = profileID != nil && previousProfile != nil && previousProfile != profileID
+        let accountChanged = previousOrg.map { $0 != accountID || profileChanged } ?? false
+        if accountChanged {
             try? FileManager.default.removeItem(at: claudeUsageCacheURL())
             try? FileManager.default.removeItem(at: snapshotURL(for: "Claude"))
         }
-        if previous != accountID {
+        // Desktop also records the organization. Keep the CLI profile when both use the same org.
+        let currentProfile = profileID ?? (previousOrg == accountID ? previousProfile : nil)
+        let change = accountChanged ? String(Date().timeIntervalSince1970) : parts.dropFirst(2).first ?? ""
+        let marker = [accountID, currentProfile ?? "", change]
+        if parts != marker {
             try? FileManager.default.createDirectory(
                 at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try? accountID.write(to: url, atomically: true, encoding: .utf8)
+            try? marker.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
         }
+    }
+
+    private func claudeAccountMarker() -> [String] {
+        (try? String(contentsOf: claudeAccountFileURL(), encoding: .utf8))?.components(separatedBy: "\n") ?? []
     }
 
     private func claudeAccountFileURL() -> URL {

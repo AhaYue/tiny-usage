@@ -25,4 +25,4 @@ func quotaWindowDays(_ windowSeconds: TimeInterval?) -> Int? {
 /// A string from the app's own table (`Resources/*.lproj`). Use this for every user-facing string:
 /// a bare `Text("…")` or `String(localized:)` looks in Bundle.main, which has no strings in Xcode
 /// Previews or tests.
-func L(_ key: String.LocalizationValue) -> String { String(localized: key, bundle: .tinyUsage) }
+func L(_ key: String.LocalizationValue) -> String { AppLanguage.current.text(key) }
