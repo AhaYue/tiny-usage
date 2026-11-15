@@ -1,0 +1,110 @@
+name: Release
+
+# Push a tag like v0.2.0 → test, build, Sparkle-sign, add the item to appcast.xml on main,
+# and publish a GitHub Release with the zip (for in-app updates) and the dmg (first install).
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    permissions:
+      contents: write   # push appcast.xml to main, create the release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version
+        id: v
+        env:
+          REF: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "BUILD=$(bash scripts/build_number.sh "$VERSION")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved', 'Package.swift') }}
+          restore-keys: ${{ runner.os }}-spm-
+
+      - name: Test
+        run: swift test
+
+      - name: Build and package
+        env:
+          VERSION: ${{ steps.v.outputs.VERSION }}
+        run: |
+          bash scripts/build-app.sh release
+          bash scripts/package.sh
+
+      - name: Sparkle signature
+        id: sig
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          VERSION: ${{ steps.v.outputs.VERSION }}
+        run: |
+          ZIP="dist/TinyUsage-$VERSION.zip"
+          KEY="$(mktemp)"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY"
+          SIG="$(.build/artifacts/sparkle/Sparkle/bin/sign_update --ed-key-file "$KEY" "$ZIP" | grep -oE 'edSignature="[^"]+"' | cut -d'"' -f2)"
+          rm -f "$KEY"
+          [ -n "$SIG" ] || { echo "::error::sign_update produced no signature"; exit 1; }
+          echo "SIG=$SIG" >> "$GITHUB_OUTPUT"
+          echo "LENGTH=$(wc -c < "$ZIP" | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes
+        env:
+          VERSION: ${{ steps.v.outputs.VERSION }}
+        run: |
+          awk -v v="$VERSION" '$0 ~ "^## \\["v"\\]" {c=1; next} c && /^## \[/ {c=0} c' CHANGELOG.md > /tmp/notes.md
+          [ -s /tmp/notes.md ] || echo "Tiny Usage $VERSION" > /tmp/notes.md
+          cat /tmp/notes.md
+
+      # Create the release before publishing the appcast entry, so no client is ever offered a
+      # download that doesn't exist yet.
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.VERSION }}
+        run: |
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/TinyUsage-$VERSION.zip dist/TinyUsage-$VERSION.dmg --clobber
+          else
+            gh release create "$TAG" dist/TinyUsage-$VERSION.zip dist/TinyUsage-$VERSION.dmg \
+              --title "Tiny Usage $VERSION" --notes-file /tmp/notes.md
+          fi
+
+      - name: Publish appcast
+        env:
+          VERSION: ${{ steps.v.outputs.VERSION }}
+          BUILD: ${{ steps.v.outputs.BUILD }}
+          SIG: ${{ steps.sig.outputs.SIG }}
+          LENGTH: ${{ steps.sig.outputs.LENGTH }}
+          REPO: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -f -B main origin/main
+            python3 scripts/update_appcast.py --version "$VERSION" --build-number "$BUILD" \
+              --url "https://github.com/$REPO/releases/download/v$VERSION/TinyUsage-$VERSION.zip" \
+              --signature "$SIG" --length "$LENGTH" --notes "$(cat /tmp/notes.md)" --appcast appcast.xml
+            git add appcast.xml
+            git commit -m "chore: appcast v$VERSION"
+            git push origin main && exit 0
+            sleep $((attempt * 5))
+          done
+          echo "::error::could not push appcast.xml to main"; exit 1

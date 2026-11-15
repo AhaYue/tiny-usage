@@ -47,12 +47,15 @@ if let previous = argument("--previous"), !previous.isEmpty {
         exit(command.terminationStatus)
     } catch { exit(0) }
 } else if let limits = root?["rate_limits"] as? [String: Any] {
+    // No bundle here, so the one visible string follows the system language directly.
+    let chinese = Locale.preferredLanguages.first?.hasPrefix("zh") == true
     let values = [("five_hour", "5h"), ("seven_day", "7d")].compactMap { key, label -> String? in
         guard let window = limits[key] as? [String: Any] else { return nil }
         let raw = (window["used_percentage"] as? NSNumber)?.doubleValue
             ?? (window["used_percentage"] as? String).flatMap(Double.init)
         guard let raw, raw.isFinite else { return nil }
-        return "\(label) 剩余 \(Int(max(0, min(100, 100 - raw)).rounded()))%"
+        let left = Int(max(0, min(100, 100 - raw)).rounded())
+        return chinese ? "\(label) 剩余 \(left)%" : "\(label) \(left)% left"
     }
     if !values.isEmpty { print("Tiny Usage  " + values.joined(separator: " · ")) }
 }

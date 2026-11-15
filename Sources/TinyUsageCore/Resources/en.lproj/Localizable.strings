@@ -1,0 +1,131 @@
+/* Quota rows and units */
+"5h" = "5h";
+"duration.unit.day" = "d";
+"duration.unit.hour" = "h";
+"duration.unit.minute" = "m";
+"Weekly quota" = "Weekly quota";
+"All models" = "All models";
+"Weekly limit for this model" = "Weekly limit for this model";
+"No quota data" = "No quota data";
+"Long-term quota is used up; the 5-hour quota is unavailable for now" = "Long-term quota is used up; the 5-hour quota is unavailable for now";
+"%@ remaining: reset time unknown" = "%@ remaining: reset time unknown";
+"%@ used: reset time unknown" = "%@ used: reset time unknown";
+"%@ remaining: resets %@" = "%@ remaining: resets %@";
+"%@ used: resets %@" = "%@ used: resets %@";
+
+/* Reset credits and billing */
+"Renewal credit" = "Reset credit";
+"Cloud credit" = "Cloud credit";
+"Credit balance" = "Credit balance";
+"Spending" = "Spending";
+"Unlimited" = "Unlimited";
+"%@ credits" = "%@ credits";
+
+/* Panel */
+"Refresh" = "Refresh";
+"Refreshing" = "Refreshing";
+"Reading…" = "Reading…";
+"Reading" = "Reading";
+"Settings" = "Settings";
+"Close settings" = "Close settings";
+"Just now" = "Just now";
+"%lld min ago" = "%lld min ago";
+"Updated %@" = "Updated %@";
+"Captured %@" = "Captured %@";
+"No Claude or Codex usage data yet" = "No Claude or Codex usage data yet";
+"%@: couldn't get the latest data" = "%@: couldn't get the latest data";
+"popover.unavailable.dismiss" = "Dismiss";
+"Waiting for Codex local usage to update." = "Waiting for Codex local usage to update.";
+
+/* Claude guidance and authorization */
+"Waiting for first local data" = "Waiting for first local data";
+"Waiting for a usage update" = "Waiting for a usage update";
+"Cached usage" = "Cached usage";
+"Last usage · Waiting to update" = "Last usage · Waiting to update";
+"Usage appears after you use Claude Code." = "Usage appears after you use Claude Code.";
+"Can't update right now" = "Can't update right now";
+"Claude login expired" = "Claude login expired";
+"Open Claude Code to restore it." = "Open Claude Code to restore it.";
+"Authorize query" = "Authorize query";
+"Authorize reset credits" = "Authorize reset credits";
+"Reads the Claude login credential from the keychain; macOS asks only after you confirm" = "Reads the Claude login credential from the keychain; macOS asks only after you confirm";
+"Reads the Claude login credential from the keychain to query quota; macOS asks only after you confirm" = "Reads the Claude login credential from the keychain to query quota; macOS asks only after you confirm";
+"Authorize viewing Claude reset credits?" = "Authorize viewing Claude reset credits?";
+"Only reads the login credential to query reset credits and the full quota; it doesn't change your login. When macOS asks, choose “Always Allow” and it won't ask again." = "Only reads the login credential to query reset credits and the full quota; it doesn't change your login. When macOS asks, choose “Always Allow” and it won't ask again.";
+"Authorize" = "Authorize";
+"Cancel" = "Cancel";
+"OK" = "OK";
+
+/* Settings */
+"Launch at login" = "Launch at login";
+"Opens Tiny Usage after you log in." = "Opens Tiny Usage after you log in.";
+"Couldn't change launch at login" = "Couldn't change launch at login";
+"Queries Claude reset credits and the full quota." = "Queries Claude reset credits and the full quota.";
+"Display" = "Display";
+"Colour follows what's left." = "Colour follows what's left.";
+"Remaining" = "Remaining";
+"Used" = "Used";
+"Menu bar" = "Menu bar";
+"Bars" = "Bars";
+"Percent" = "Percent";
+"Bars + %" = "Bars + %";
+"Refresh rate" = "Refresh rate";
+"Auto" = "Auto";
+"Every 5 min" = "Every 5 min";
+"Every 15 min" = "Every 15 min";
+"Every 30 min" = "Every 30 min";
+"Manual only" = "Manual only";
+"Adaptive, 2–30 min" = "Adaptive, 2–30 min";
+"Local and network alike" = "Local and network alike";
+"Manual refresh only" = "Manual refresh only";
+"Refresh usage" = "Refresh usage";
+"Open data folder" = "Open data folder";
+"Check for updates" = "Check for updates";
+"About" = "About";
+"Version and open-source licenses." = "Version and open-source licenses.";
+"Quit Tiny Usage" = "Quit Tiny Usage";
+
+/* About window */
+"About Tiny Usage" = "About Tiny Usage";
+"Version %@" = "Version %@";
+"Acknowledgements" = "Acknowledgements";
+"Upstream project: Tiny Usage is derived from Mimir (© 2026 Eray Endes)." = "Upstream project: Tiny Usage is derived from Mimir (© 2026 Eray Endes).";
+"MIT License" = "MIT License";
+"Visual and interaction reference; none of its code or assets are used." = "Visual and interaction reference; none of its code or assets are used.";
+"No open-source license declared" = "No open-source license declared";
+"Claude status line" = "Claude status line";
+"Reads usage through Claude Code's status line and keeps your existing one." = "Reads usage through Claude Code's status line and keeps your existing one.";
+"Not connected. Claude usage needs authorization to query." = "Not connected. Claude usage needs authorization to query.";
+"Disconnect" = "Disconnect";
+"Reconnect" = "Reconnect";
+"Tiny Usage License" = "Tiny Usage License";
+
+/* Menu bar tooltip */
+"%@: 5h %@ left, long-term %@ left" = "%@: 5h %@ left, long-term %@ left";
+"%@: 5h %@ used, long-term %@ used" = "%@: 5h %@ used, long-term %@ used";
+"unknown" = "unknown";
+
+/* Data source notes */
+"out of date" = "out of date";
+"no local source" = "no local source";
+"claude token missing" = "Claude credential not found";
+"authorize in Settings to read the Claude credential" = "authorize in Settings to read the Claude credential";
+"token expired — open Claude Code" = "token expired — open Claude Code";
+"token expired — run codex login" = "token expired — run codex login";
+"Quota API · reset credits from last capture" = "Quota API · reset credits from last capture";
+"Quota updated · reset credits from last capture" = "Quota updated · reset credits from last capture";
+"Claude Desktop · includes reset credits" = "Claude Desktop · includes reset credits";
+"Local status line · extras from last capture" = "Local status line · extras from last capture";
+"Local status line · extras from last API capture" = "Local status line · extras from last API capture";
+"Demo data" = "Demo data";
+
+/* Claude status line hook errors */
+"Couldn't connect the Claude status line" = "Couldn't connect the Claude status line";
+"Couldn't disconnect the Claude status line" = "Couldn't disconnect the Claude status line";
+"Capture helper not found. Enable it from a built Tiny Usage.app." = "Capture helper not found. Enable it from a built Tiny Usage.app.";
+"settings.json is not valid JSON; nothing was changed." = "settings.json is not valid JSON; nothing was changed.";
+"Couldn't recognise the existing statusLine; nothing was changed." = "Couldn't recognise the existing statusLine; nothing was changed.";
+"This statusLine type can't be wrapped; nothing was changed." = "This statusLine type can't be wrapped; nothing was changed.";
+"The config was just changed by another program. Try again." = "The config was just changed by another program. Try again.";
+"statusLine was changed externally; left as is, not overwritten." = "statusLine was changed externally; left as is, not overwritten.";
+"The config changed. Try again." = "The config changed. Try again.";

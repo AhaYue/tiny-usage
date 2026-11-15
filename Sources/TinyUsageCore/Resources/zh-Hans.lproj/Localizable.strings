@@ -1,0 +1,131 @@
+/* Quota rows and units */
+"5h" = "5小时";
+"duration.unit.day" = "天";
+"duration.unit.hour" = "时";
+"duration.unit.minute" = "分";
+"Weekly quota" = "周配额";
+"All models" = "全部模型";
+"Weekly limit for this model" = "此模型的周配额";
+"No quota data" = "暂无配额数据";
+"Long-term quota is used up; the 5-hour quota is unavailable for now" = "长期配额已用完，5 小时配额暂时无法使用";
+"%@ remaining: reset time unknown" = "%@剩余：重置时间未知";
+"%@ used: reset time unknown" = "%@已用：重置时间未知";
+"%@ remaining: resets %@" = "%1$@剩余：%2$@ 重置";
+"%@ used: resets %@" = "%1$@已用：%2$@ 重置";
+
+/* Reset credits and billing */
+"Renewal credit" = "重置卡";
+"Cloud credit" = "云端积分";
+"Credit balance" = "积分余额";
+"Spending" = "额外用量";
+"Unlimited" = "不限量";
+"%@ credits" = "%@ 积分";
+
+/* Panel */
+"Refresh" = "刷新";
+"Refreshing" = "正在刷新";
+"Reading…" = "正在读取…";
+"Reading" = "正在读取";
+"Settings" = "设置";
+"Close settings" = "关闭设置";
+"Just now" = "更新于 刚刚";
+"%lld min ago" = "更新于 %lld 分钟前";
+"Updated %@" = "更新于 %@";
+"Captured %@" = "采集于 %@";
+"No Claude or Codex usage data yet" = "暂无 Claude 或 Codex 用量数据";
+"%@: couldn't get the latest data" = "%@：无法获取最新数据";
+"popover.unavailable.dismiss" = "收起提示";
+"Waiting for Codex local usage to update." = "等待 Codex 本地用量更新。";
+
+/* Claude guidance and authorization */
+"Waiting for first local data" = "等待首次本地数据";
+"Waiting for a usage update" = "等待用量更新";
+"Cached usage" = "缓存用量";
+"Last usage · Waiting to update" = "显示上次用量，等待更新";
+"Usage appears after you use Claude Code." = "使用 Claude Code 后会显示用量。";
+"Can't update right now" = "暂时无法更新";
+"Claude login expired" = "Claude 登录已过期";
+"Open Claude Code to restore it." = "打开 Claude Code 后自动恢复。";
+"Authorize query" = "授权查询";
+"Authorize reset credits" = "授权查看重置卡";
+"Reads the Claude login credential from the keychain; macOS asks only after you confirm" = "读取钥匙串中的 Claude 登录凭据；确认后系统才会询问";
+"Reads the Claude login credential from the keychain to query quota; macOS asks only after you confirm" = "读取钥匙串中的 Claude 登录凭据查询配额；确认后系统才会询问";
+"Authorize viewing Claude reset credits?" = "授权查看 Claude 重置卡？";
+"Only reads the login credential to query reset credits and the full quota; it doesn't change your login. When macOS asks, choose “Always Allow” and it won't ask again." = "只读取登录凭据查询重置卡与完整配额，不修改登录。系统询问时选择「始终允许」，之后不再询问。";
+"Authorize" = "授权";
+"Cancel" = "取消";
+"OK" = "好";
+
+/* Settings */
+"Launch at login" = "登录时启动";
+"Opens Tiny Usage after you log in." = "登录后自动打开 Tiny Usage。";
+"Couldn't change launch at login" = "无法更改开机启动";
+"Queries Claude reset credits and the full quota." = "查询 Claude 重置卡与完整配额。";
+"Display" = "显示数值";
+"Colour follows what's left." = "颜色始终按剩余量。";
+"Remaining" = "剩余量";
+"Used" = "已用量";
+"Menu bar" = "菜单栏样式";
+"Bars" = "双条";
+"Percent" = "百分比";
+"Bars + %" = "双条＋百分比";
+"Refresh rate" = "刷新频率";
+"Auto" = "自动";
+"Every 5 min" = "每 5 分钟";
+"Every 15 min" = "每 15 分钟";
+"Every 30 min" = "每 30 分钟";
+"Manual only" = "仅手动";
+"Adaptive, 2–30 min" = "网络 2–30 分钟自适应";
+"Local and network alike" = "本地与网络都按此间隔";
+"Manual refresh only" = "只在手动刷新时读取";
+"Refresh usage" = "刷新用量";
+"Open data folder" = "打开数据文件夹";
+"Check for updates" = "检查更新";
+"About" = "关于";
+"Version and open-source licenses." = "版本与开源许可。";
+"Quit Tiny Usage" = "退出 Tiny Usage";
+
+/* About window */
+"About Tiny Usage" = "关于 Tiny Usage";
+"Version %@" = "版本 %@";
+"Acknowledgements" = "致谢";
+"Upstream project: Tiny Usage is derived from Mimir (© 2026 Eray Endes)." = "上游项目：Tiny Usage 派生自 Mimir（© 2026 Eray Endes）。";
+"MIT License" = "MIT 许可";
+"Visual and interaction reference; none of its code or assets are used." = "视觉交互参考，未使用其代码或素材。";
+"No open-source license declared" = "未声明开源许可";
+"Claude status line" = "Claude 状态栏";
+"Reads usage through Claude Code's status line and keeps your existing one." = "通过 Claude Code 状态栏读取用量，保留原有状态栏。";
+"Not connected. Claude usage needs authorization to query." = "未接入，Claude 用量需授权后查询。";
+"Disconnect" = "移除接入";
+"Reconnect" = "重新接入";
+"Tiny Usage License" = "Tiny Usage 许可";
+
+/* Menu bar tooltip */
+"%@: 5h %@ left, long-term %@ left" = "%1$@：5h 剩余 %2$@，长期 剩余 %3$@";
+"%@: 5h %@ used, long-term %@ used" = "%1$@：5h 已用 %2$@，长期 已用 %3$@";
+"unknown" = "未知";
+
+/* Data source notes */
+"out of date" = "旧数据";
+"no local source" = "未找到本地来源";
+"claude token missing" = "未找到 Claude 凭证";
+"authorize in Settings to read the Claude credential" = "请在设置中授权读取 Claude 凭证";
+"token expired — open Claude Code" = "凭证已过期，请打开 Claude Code";
+"token expired — run codex login" = "凭证已过期，请运行 codex login";
+"Quota API · reset credits from last capture" = "配额接口 · 重置卡为上次采集";
+"Quota updated · reset credits from last capture" = "配额已更新 · 重置卡为上次采集";
+"Claude Desktop · includes reset credits" = "Claude Desktop · 含重置卡";
+"Local status line · extras from last capture" = "本地状态栏 · 附加项目为上次采集";
+"Local status line · extras from last API capture" = "本地状态栏 · 附加项目来自上次接口采集";
+"Demo data" = "演示数据";
+
+/* Claude status line hook errors */
+"Couldn't connect the Claude status line" = "无法接入 Claude 状态栏";
+"Couldn't disconnect the Claude status line" = "无法移除 Claude 状态栏接入";
+"Capture helper not found. Enable it from a built Tiny Usage.app." = "找不到采集程序，请从构建后的 Tiny Usage.app 启用。";
+"settings.json is not valid JSON; nothing was changed." = "settings.json 不是有效 JSON，未修改配置。";
+"Couldn't recognise the existing statusLine; nothing was changed." = "无法识别已有 statusLine，未修改。";
+"This statusLine type can't be wrapped; nothing was changed." = "不支持包装此 statusLine 类型，未修改。";
+"The config was just changed by another program. Try again." = "配置刚被其他程序修改，请重试。";
+"statusLine was changed externally; left as is, not overwritten." = "statusLine 已有外部修改，保留现场，未自动覆盖。";
+"The config changed. Try again." = "配置已变化，请重试。";
