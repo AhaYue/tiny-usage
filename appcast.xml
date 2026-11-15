@@ -6,6 +6,30 @@
     <description>Tiny Usage update feed</description>
     <language>en</language>
     <item>
+      <title>Tiny Usage 1.1.0</title>
+      <sparkle:version>1001000</sparkle:version>
+      <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Sun, 15 Nov 2026 17:01:29 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<ul>
+<li>Connect OpenCode Go from Settings to see your 5-hour, weekly, and monthly quotas and reset times.</li>
+<li>See Claude Code quotas on first launch with your existing CLI login when fresh status-line data is unavailable.</li>
+<li>Keep Codex quota readings and session history tied to the same login directory, including custom `CODEX_HOME` folders.</li>
+<li>Switch between English, Simplified Chinese, and the system language in Settings.</li>
+</ul>
+      ]]></description>
+      <description xml:lang="zh-Hans"><![CDATA[
+<ul>
+<li>可在设置中接入 OpenCode Go，查看 5 小时、每周、月度配额及重置时间。</li>
+<li>状态栏没有新数据时，可用已有的 Claude Code 登录查询配额，首次打开即可显示。</li>
+<li>Codex 配额与本地会话统一使用同一登录目录，支持自定义 `CODEX_HOME`。</li>
+<li>可在设置中选择英文、简体中文或跟随系统。</li>
+</ul>
+      ]]></description>
+      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.1.0/TinyUsage-1.1.0.zip" sparkle:edSignature="kOzlrQeC+f5luK/1KKMBWoRbhnCvyj0o3O6zwjBHvgoVk4FC+isEk03nrSxPQRrf9TbzArcH60/uq1PURavgAQ==" length="1533735" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Tiny Usage 1.0.0</title>
       <sparkle:version>1000000</sparkle:version>
       <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
