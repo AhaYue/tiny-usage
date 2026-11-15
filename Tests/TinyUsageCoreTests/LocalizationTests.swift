@@ -29,6 +29,8 @@ final class LocalizationTests: XCTestCase {
     }
 
     func testOnlyEnglishAndChineseShip() {
-        XCTAssertEqual(Set(Bundle.tinyUsage.localizations).subtracting(["Base"]), ["en", "zh-Hans"])
+        // Older SwiftPM lowercases .lproj names in the test bundle ("zh-hans"); the app bundle is
+        // copied from the sources as is, so only this comparison needs to ignore case.
+        XCTAssertEqual(Set(Bundle.tinyUsage.localizations.map { $0.lowercased() }).subtracting(["base"]), ["en", "zh-hans"])
     }
 }
