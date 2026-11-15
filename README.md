@@ -1,123 +1,83 @@
 <h1 align="center">Tiny Usage</h1>
 
 <p align="center">
-  Claude and Codex quotas in your macOS menu bar.<br>
-  Native, about 1 MB to download, no account to create.
+  See how much Claude and Codex quota you have left and when it resets. Right from your Mac’s menu bar.
 </p>
 
 <p align="center">
-  <a href="https://tiny-usage.ayue.dev/en">Website</a> · <b>English</b> · <a href="README.zh-CN.md">简体中文</a>
+  <strong><a href="https://github.com/AhaYue/tiny-usage/releases/latest/download/TinyUsage.dmg">Download for Mac</a></strong>
+  · <a href="https://tiny-usage.ayue.dev/en">Website</a>
+  · <a href="README.zh-CN.md">简体中文</a>
+  <br>
+  macOS 14+ · Apple Silicon · About 1 MB
 </p>
 
 <p align="center">
-  <img src="docs/screenshot.png" width="431" alt="Tiny Usage in the menu bar with its panel open">
+  <img src="docs/screenshot.png" width="431" alt="Tiny Usage shows Claude and Codex in the macOS menu bar, with reset countdowns in the open panel">
 </p>
 
-## What it shows
+## See what’s left at a glance
 
-- **Both windows at a glance.** Each service gets two bars in the menu bar: the 5-hour window on top, the weekly one below.
-- **Colour by what's left.** Green at 50% or more, orange from 20% to 49%, red below 20%. The same number is always the same colour.
-- **A time marker on each bar.** The thin line shows how much of the window's time is left. A bar that reaches past the line means quota is lasting longer than the clock.
-- **Per-model limits and reset credits.** The panel lists each model's weekly limit, when every window resets, and any reset credits with their expiry.
-- **Honest about stale data.** A reading that couldn't be refreshed is labelled as such. Missing quota stays unknown instead of being shown as full.
+- See **Claude and Codex** side by side.
+- Check the **time marker** to see if your quota will last until reset.
+- **Open the panel** to see your reset credits.
 
-The menu bar can show bars, percentages or both, and either the remaining or the used amount.
+## Native and lightweight
 
-## Install
+Built with Swift, AppKit, and SwiftUI. No WebView, Electron, or Node.js. Closing the panel releases its view. The menu bar redraws once a minute and pauses during sleep.
 
-Requires macOS 14 or later on Apple Silicon.
+| DMG download | Memory footprint¹ | Idle CPU¹ | Third-party dependencies |
+| :---: | :---: | :---: | :---: |
+| **About 1 MB** | **32.5 MiB** | **0.17%** | **1** (Sparkle) |
 
-1. Download `TinyUsage-x.y.z.dmg` from the [latest release](https://github.com/AhaYue/tiny-usage/releases/latest).
-2. Drag **Tiny Usage** into **Applications** and open it.
-3. macOS will block the first launch, because the app isn't notarized by Apple. Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+¹ Memory and CPU were sampled over 30 seconds with the panel closed on an Apple Silicon build predating Sparkle. CPU is measured as a percentage of one core. [Performance notes](docs/PERFORMANCE.md)
 
-If you prefer the terminal, this does the same as step 3:
+## Get started
 
-```sh
-xattr -dr com.apple.quarantine "/Applications/Tiny Usage.app"
-```
-
-After that, updates install from inside the app. It checks once a day, and **Settings → Check for updates** checks on demand.
-
-## Where the numbers come from
-
-Everything is read on your Mac. Tiny Usage has no server and sends no telemetry.
-
-| Service | Source | Needs |
-| --- | --- | --- |
-| Claude | Claude Code's status line, captured locally | Claude Code in use |
-| Claude (reset credits, full quota) | Anthropic's usage API, with your existing Claude Code or Claude desktop login | One-time authorization |
-| Codex | The Codex CLI's login and local session files | `codex login` |
-
-### What changes on your Mac
-
-On first launch, Tiny Usage connects itself to Claude Code's status line so it can read your quota without asking for any credential:
-
-- It sets `statusLine` in `~/.claude/settings.json` to a small script. A status line you already have keeps running and showing exactly as before.
-- It keeps a backup of the original file as `settings.json.tiny-usage-backup`, next to it.
-- The script saves only the quota percentages and reset times. The rest of the status-line input is never written to disk.
-
-To undo it, open **Settings → About → Claude status line → Disconnect**. Your original status line is restored, and Tiny Usage doesn't reconnect on its own afterwards.
-
-Usage appears after you next use Claude Code.
-
-### Authorization is optional
-
-Reset credits and per-model limits aren't in the status line. To see them, use the authorize button on the Claude card and confirm. Only then does macOS ask for keychain access to your Claude login, and to the Claude desktop app's session if that app is installed. Tiny Usage reads those credentials, and never refreshes, rotates or writes them back. Opening the panel or a normal refresh never triggers a keychain prompt.
-
-### Limits
-
-These quota endpoints are private and undocumented. Anthropic or OpenAI can change them at any time, and a card may stop updating until Tiny Usage catches up. Tiny Usage is not affiliated with or endorsed by either company.
-
-## Settings
-
-| Setting | Options |
-| --- | --- |
-| Display | Remaining or used |
-| Menu bar | Bars, percent, or both |
-| Refresh rate | Auto (adaptive, 2–30 min), every 5 / 15 / 30 min, or manual only |
-| Launch at login | On or off |
-
-App state lives in `~/Library/Application Support/Tiny Usage/`. **Settings → Open data folder** takes you there.
-
-## Build from source
-
-You need the Xcode toolchain with Swift 6.
+With Homebrew:
 
 ```sh
-bash scripts/test.sh               # tests, isolated from your real logins and keychain
-bash scripts/build-app.sh release  # → dist/Tiny Usage.app
-open "dist/Tiny Usage.app"
+brew install --cask ahayue/tap/tiny-usage
 ```
 
-Other useful scripts:
+Or [download the DMG](https://github.com/AhaYue/tiny-usage/releases/latest/download/TinyUsage.dmg) and drag **Tiny Usage** to **Applications**.
 
-| Script | What it does |
-| --- | --- |
-| `scripts/preview.sh` | Renders the panel and its states to PNGs with demo data |
-| `scripts/package.sh` | Makes the release zip and DMG from the built app |
-| `scripts/restart-as-new-user.sh` | Rebuilds and launches as a first-time user, keeping your logins |
+<details>
+<summary>Download the DMG with curl</summary>
 
-Measurements are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+```sh
+curl -fL -o TinyUsage.dmg \
+  https://github.com/AhaYue/tiny-usage/releases/latest/download/TinyUsage.dmg && open TinyUsage.dmg
+```
 
-## Releasing
+</details>
 
-1. Add a `## [x.y.z]` section to the top of [CHANGELOG.md](CHANGELOG.md), with an English and a Chinese list.
-2. Push the tag: `git tag vx.y.z && git push origin vx.y.z`.
-3. GitHub Actions tests, builds, signs the update, creates the release and adds it to `appcast.xml`.
+If macOS blocks the first launch, go to **System Settings → Privacy & Security → Open Anyway**.
 
-To rehearse without publishing, run the **Release** workflow by hand from the Actions tab.
+Use Claude Code as usual to populate the Claude card. For Codex, Tiny Usage can use your existing CLI login and local session history.
 
-Updates are signed with an EdDSA key held in the `SPARKLE_PRIVATE_KEY` repository secret. If that key is lost, installed copies can no longer be updated.
+Tiny Usage checks for updates automatically. To check manually, open **Settings → Check for updates**.
 
-## Credits
+## How Tiny Usage reads your quota
 
-- [Mimir](https://github.com/erayendes/mimir) by Eray Endes (MIT). Tiny Usage is derived from it: the provider parsers, quota cards and reset-credit handling started there.
-- [Sparkle](https://github.com/sparkle-project/Sparkle) (MIT) for in-app updates.
-- [ai-usage](https://github.com/wawaka/ai-usage) as a visual reference for the menu bar. None of its code or assets are used.
+Tiny Usage uses your existing Claude and Codex setup. It has no Tiny Usage account, backend, or telemetry. Where available, it queries Anthropic or OpenAI directly from your Mac.
 
-Claude and Codex are trademarks of their respective owners.
+On first launch, Tiny Usage connects to the Claude Code status line. You can disconnect it in Settings.
 
-## License
+<details>
+<summary>Claude Code setup, optional authorization, and data sources</summary>
 
-[MIT](LICENSE)
+- **Claude Code.** Tiny Usage wraps `statusLine` in `~/.claude/settings.json` and keeps your existing status line running. It backs up the file as `settings.json.tiny-usage-backup` and saves only quota percentages and reset times from the status line. Use **Settings → About → Claude status line → Disconnect** to restore the original setup. Tiny Usage will only reconnect if you ask it to.
+- **More Claude details.** To get model limits and reset credits from Anthropic, authorize access from the Claude card using your existing Claude Code or Claude Desktop login. macOS asks for Keychain access only after you confirm. Tiny Usage reads these credentials without refreshing or writing them back.
+- **Codex.** Tiny Usage can use the CLI’s existing login to query OpenAI. Local session files can also supply quota data.
+
+</details>
+
+<details>
+<summary>Build from source</summary>
+
+With Xcode and Swift 6, run `bash scripts/build-app.sh release` from the repository root to create `dist/Tiny Usage.app`.
+
+</details>
+
+[MIT License](LICENSE) · Based on [Mimir](https://github.com/erayendes/mimir) · Updates by [Sparkle](https://github.com/sparkle-project/Sparkle) · Menu bar design inspired by [ai-usage](https://github.com/wawaka/ai-usage)

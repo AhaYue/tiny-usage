@@ -99,10 +99,12 @@ jobs:
           VERSION: ${{ steps.v.outputs.VERSION }}
         run: |
           TAG="v$VERSION"
+          cp "dist/TinyUsage-$VERSION.dmg" dist/TinyUsage.dmg
+          assets=("dist/TinyUsage-$VERSION.zip" "dist/TinyUsage-$VERSION.dmg" dist/TinyUsage.dmg)
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/TinyUsage-$VERSION.zip dist/TinyUsage-$VERSION.dmg --clobber
+            gh release upload "$TAG" "${assets[@]}" --clobber
           else
-            gh release create "$TAG" dist/TinyUsage-$VERSION.zip dist/TinyUsage-$VERSION.dmg \
+            gh release create "$TAG" "${assets[@]}" \
               --title "Tiny Usage $VERSION" --notes-file /tmp/notes.md
           fi
 
