@@ -5,5 +5,29 @@
     <link>https://github.com/AhaYue/tiny-usage</link>
     <description>Tiny Usage update feed</description>
     <language>en</language>
+    <item>
+      <title>Tiny Usage 1.0.0</title>
+      <sparkle:version>1000000</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Sun, 15 Nov 2026 10:17:21 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<ul>
+<li>First public release: Claude and Codex quotas in the menu bar, with reset times and reset credits.</li>
+<li>Claude usage is read locally through Claude Code&#x27;s status line; any status line you already have keeps working.</li>
+<li>In-app updates. The DMG is about 1 MB.</li>
+<li>English and Simplified Chinese.</li>
+</ul>
+      ]]></description>
+      <description xml:lang="zh-Hans"><![CDATA[
+<ul>
+<li>首个公开版本：在菜单栏显示 Claude 和 Codex 配额、重置时间与重置卡。</li>
+<li>通过 Claude Code 状态栏在本地读取 Claude 用量，原有状态栏照常工作。</li>
+<li>支持应用内自动更新，DMG 约 1 MB。</li>
+<li>支持英文和简体中文。</li>
+</ul>
+      ]]></description>
+      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.0.0/TinyUsage-1.0.0.zip" sparkle:edSignature="quc33kVdG5D3SuuWe/QWB1kJI5bUc+VFlvVoJ1W63ELH774ri4xmj5G315q/IXJ1j+hC06Q6G7/9ccK+fr5BAg==" length="1455849" type="application/octet-stream"/>
+    </item>
   </channel>
 </rss>
