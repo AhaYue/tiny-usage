@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> · <b>简体中文</b>
+  <a href="https://tiny-usage.ayue.dev">官网</a> · <a href="README.md">English</a> · <b>简体中文</b>
 </p>
 
 <p align="center">
@@ -105,7 +105,7 @@ open "dist/Tiny Usage.app"
 | `scripts/package.sh` | 把构建好的应用打成发布用的 zip 和 DMG |
 | `scripts/restart-as-new-user.sh` | 重新构建并以首次使用的身份启动，保留已有登录 |
 
-代码结构和约定见 [AGENTS.md](AGENTS.md)，性能实测见 [docs/PERFORMANCE.md](docs/PERFORMANCE.md)。
+性能实测见 [docs/PERFORMANCE.md](docs/PERFORMANCE.md)。
 
 ## 发布
 

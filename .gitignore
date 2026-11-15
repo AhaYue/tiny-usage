@@ -1,5 +1,29 @@
+# Build output
 .build/
 .swiftpm/
 dist/
+DerivedData/
+*.dmg
+*.zip
+
+# macOS / Xcode
 .DS_Store
 *.xcuserstate
+xcuserdata/
+
+# Editors
+.vscode/
+.idea/
+
+# Agent instructions and local agent state
+AGENTS.md
+CLAUDE.md
+.claude/
+
+# Secrets: never commit signing keys or env files
+.env
+.env.*
+*.pem
+*.p8
+*.p12
+sparkle_private_key*

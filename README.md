@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.zh-CN.md">简体中文</a>
+  <a href="https://tiny-usage.ayue.dev/en">Website</a> · <b>English</b> · <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 <p align="center">
@@ -98,7 +98,7 @@ Other useful scripts:
 | `scripts/package.sh` | Makes the release zip and DMG from the built app |
 | `scripts/restart-as-new-user.sh` | Rebuilds and launches as a first-time user, keeping your logins |
 
-Project layout and conventions are in [AGENTS.md](AGENTS.md); measurements are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+Measurements are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Releasing
 
