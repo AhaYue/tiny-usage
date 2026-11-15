@@ -13,7 +13,7 @@
 | 正常模式：面板已关闭，空闲 | 32.5 MiB | 34.4 MiB | **0.17%**（30 s） | `memory-idle.txt`、`performance-idle.json` |
 | 同一进程运行约 24 分钟后 | 33.7 MiB | 35.1 MiB | 累计 6.6 s CPU，约 0.47%（含前面的交互与取数） | 手动 `ps` / `vmmap` 读数 |
 
-App 包体积 9.4 MiB，没有第三方动态库依赖。
+上表测量于加入 Sparkle 之前的构建（当时包体积 9.4 MiB，无第三方动态库，应用名还是 AY Usage）。1.0.0 的包体积约 3.5 MiB（DMG 约 1 MB），内含 Sparkle.framework；内存和 CPU 尚未在该版本上重新采样。
 
 ## 怎么读这些数字
 

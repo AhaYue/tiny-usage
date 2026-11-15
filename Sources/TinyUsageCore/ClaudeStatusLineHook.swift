@@ -161,8 +161,17 @@ enum ClaudeStatusLineHook {
         } catch let error as HookError { return .failed(error.text) }
         catch { return .failed(error.localizedDescription) }
     }
-    static func refreshScript() {
-        // Explicit reinstallation upgrades the capture helper; background launch never writes config.
+    /// Keeps the installed capture helper in step with the one in this app, so an app update also
+    /// updates the copy Claude Code runs. Touches only Tiny Usage's own file in its support
+    /// directory, never Claude Code's config, and only where the helper is already in use.
+    /// The write is an atomic replace, so a status line running at that moment keeps its old copy.
+    @discardableResult static func refreshCapture(from source: URL? = nil) -> Bool {
+        let source = source ?? Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/TinyUsageCapture")
+        let installed = FileManager.default.contents(atPath: captureURL.path)
+        guard installed != nil || isWired(),
+              FileManager.default.isExecutableFile(atPath: source.path),
+              let bundled = try? Data(contentsOf: source), !bundled.isEmpty, bundled != installed else { return false }
+        return (try? write(bundled, to: captureURL, permissions: 0o700)) != nil
     }
     static func wireExtraDirs(_ on: Bool, accounts: [ExtraAccount] = ExtraAccount.claude) {
         for account in accounts {

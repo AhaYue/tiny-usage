@@ -120,6 +120,27 @@ final class ClaudeHookTests: XCTestCase {
         try body(directory)
     }
 
+    func testCaptureHelperFollowsTheBundledOne() throws {
+        try fixture { directory in
+            let newer = directory.appendingPathComponent("newer-helper")
+            try Data("#!/bin/sh\n# v2\n".utf8).write(to: newer)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: newer.path)
+            // Never installed and not wired: nothing to keep in step.
+            XCTAssertFalse(ClaudeStatusLineHook.refreshCapture(from: newer))
+            XCTAssertFalse(FileManager.default.fileExists(atPath: ClaudeStatusLineHook.captureURL.path))
+
+            XCTAssertEqual(ClaudeStatusLineHook.enable(in: directory, helperSource: URL(fileURLWithPath: "/usr/bin/true")), .enabled)
+            XCTAssertTrue(ClaudeStatusLineHook.refreshCapture(from: newer))
+            XCTAssertEqual(try Data(contentsOf: ClaudeStatusLineHook.captureURL), try Data(contentsOf: newer))
+            XCTAssertTrue(FileManager.default.isExecutableFile(atPath: ClaudeStatusLineHook.captureURL.path))
+            // Already current: no rewrite.
+            XCTAssertFalse(ClaudeStatusLineHook.refreshCapture(from: newer))
+            // A missing bundled helper never removes the installed one.
+            XCTAssertFalse(ClaudeStatusLineHook.refreshCapture(from: directory.appendingPathComponent("absent")))
+            XCTAssertTrue(FileManager.default.fileExists(atPath: ClaudeStatusLineHook.captureURL.path))
+        }
+    }
+
     func testFullStatusLineRestoredWithoutDiscardingLaterSettings() throws {
         try fixture { directory in
             let url = directory.appendingPathComponent("settings.json")

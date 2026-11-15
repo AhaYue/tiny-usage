@@ -34,7 +34,10 @@ rsync -a --exclude MenuIcon.png "$project/Sources/TinyUsageCore/Resources/" "$ap
 sparkle="$(find "$project/.build/artifacts" -path '*macos*' -name Sparkle.framework -type d | head -1)"
 [[ -n "$sparkle" ]] || { echo "Sparkle.framework not found; run swift package resolve" >&2; exit 1; }
 ditto --norsrc "$sparkle" "$app/Contents/Frameworks/Sparkle.framework"
-rm -rf "$app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices" "$app/Contents/Frameworks/Sparkle.framework/XPCServices"
+# Headers and module maps are for compiling against the framework, not for running it.
+for extra in XPCServices Headers PrivateHeaders Modules; do
+  rm -rf "$app/Contents/Frameworks/Sparkle.framework/Versions/B/$extra" "$app/Contents/Frameworks/Sparkle.framework/$extra"
+done
 cp "$project/LICENSE" "$app/Contents/Resources/LICENSE.txt"
 cp "$project/Assets/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
 cat > "$app/Contents/Info.plist" <<PLIST

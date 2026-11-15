@@ -32,6 +32,8 @@ enum KeychainAccess {
             return status
         }
 
+        // Deprecated since 10.10 with no replacement: SecItem's own "no UI" options don't cover
+        // the login keychain's ACL dialog, so these two calls stay until Apple offers one.
         var previouslyAllowed: DarwinBoolean = false
         let readStatus = SecKeychainGetUserInteractionAllowed(&previouslyAllowed)
         guard readStatus == errSecSuccess else { return readStatus }

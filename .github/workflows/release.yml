@@ -2,9 +2,17 @@ name: Release
 
 # Push a tag like v0.2.0 → test, build, Sparkle-sign, add the item to appcast.xml on main,
 # and publish a GitHub Release with the zip (for in-app updates) and the dmg (first install).
+#
+# Run it by hand (Actions → Release → Run workflow) for a dry run: it tests, builds and packages,
+# keeps the zip and dmg as a workflow artifact, and publishes nothing.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build as a dry run (nothing is published)'
+        default: '0.0.0'
 
 permissions:
   contents: read
@@ -27,8 +35,9 @@ jobs:
         id: v
         env:
           REF: ${{ github.ref_name }}
+          INPUT: ${{ inputs.version }}
         run: |
-          VERSION="${REF#v}"
+          if [ "$GITHUB_EVENT_NAME" = push ]; then VERSION="${REF#v}"; else VERSION="${INPUT#v}"; fi
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
           echo "BUILD=$(bash scripts/build_number.sh "$VERSION")" >> "$GITHUB_OUTPUT"
 
@@ -39,7 +48,7 @@ jobs:
           restore-keys: ${{ runner.os }}-spm-
 
       - name: Test
-        run: swift test
+        run: bash scripts/test.sh
 
       - name: Build and package
         env:
@@ -48,7 +57,17 @@ jobs:
           bash scripts/build-app.sh release
           bash scripts/package.sh
 
+      - name: Keep the dry-run packages
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TinyUsage-${{ steps.v.outputs.VERSION }}-dry-run
+          path: |
+            dist/*.zip
+            dist/*.dmg
+
       - name: Sparkle signature
+        if: github.event_name == 'push'
         id: sig
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
@@ -74,6 +93,7 @@ jobs:
       # Create the release before publishing the appcast entry, so no client is ever offered a
       # download that doesn't exist yet.
       - name: GitHub Release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.v.outputs.VERSION }}
@@ -87,6 +107,7 @@ jobs:
           fi
 
       - name: Publish appcast
+        if: github.event_name == 'push'
         env:
           VERSION: ${{ steps.v.outputs.VERSION }}
           BUILD: ${{ steps.v.outputs.BUILD }}

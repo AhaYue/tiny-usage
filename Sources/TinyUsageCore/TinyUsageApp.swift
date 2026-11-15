@@ -81,8 +81,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private func wireClaudeHookIfNeeded() {
         guard !demo, !CommandLine.arguments.contains("--smoke-test"),
               ProcessInfo.processInfo.environment["TINY_USAGE_TEST_HOME"] == nil,
-              !UserDefaults.standard.bool(forKey: Self.hookRemovedKey),
-              !ClaudeStatusLineHook.isWired() else { return }
+              !UserDefaults.standard.bool(forKey: Self.hookRemovedKey) else { return }
+        // An app update brings a new capture helper; the installed copy follows it.
+        ClaudeStatusLineHook.refreshCapture()
+        guard !ClaudeStatusLineHook.isWired() else { return }
         ClaudeStatusLineHook.enable()
     }
 
@@ -108,8 +110,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// The only path that may show the macOS keychain dialog, and only after this confirmation.
-    /// Nothing is persisted: a granted source is read silently on every refresh from then on, a
-    /// refused one simply stays unavailable, and the button can be pressed again.
+    /// Only the fact of having asked is remembered (it hides the card's hint): a granted source is
+    /// read silently on every refresh from then on, a refused one simply stays unavailable, and
+    /// the button can be pressed again.
     private func authorize() {
         guard !demo else { return }
         let alert = NSAlert()

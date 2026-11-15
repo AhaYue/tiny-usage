@@ -547,48 +547,6 @@ struct LiveUsageDataSource {
         guard let m = regex.firstMatch(in: command, range: range), m.numberOfRanges > 1 else { return nil }
         return ns.substring(with: m.range(at: 1))
     }
-
-    /// Tiny Usage never refreshes a CLI's token itself — Claude Code's and Codex's refresh tokens are
-    /// single-use, and rotating one would log the CLI out. Their own `doctor` does: its auth check
-    /// renews an expired login and stores it where the CLI reads it (Codex's `auth.json`, Claude
-    /// Code's keychain item), so nothing is left holding the old token. Only when Tiny Usage is opened,
-    /// never on the timer. `dir` is a second login's config dir; nil is the main one.
-    func runShell(_ script: String, timeout: TimeInterval? = nil) -> String {
-        runCommand("/bin/zsh", ["-lc", script], timeout: timeout)
-    }
-
-    /// `stdin`, when set, is written to the process's standard input. Used to feed
-    /// secrets (e.g. a curl `--config -` block) without exposing them in `arguments`,
-    /// which are world-readable via the process table (`ps aux`).
-    func runCommand(_ launchPath: String, _ args: [String], stdin: String? = nil,
-                    timeout: TimeInterval? = nil) -> String {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: launchPath)
-        p.arguments = args
-        let out = Pipe()
-        p.standardOutput = out
-        p.standardError = Pipe()
-        let input: Pipe? = stdin != nil ? Pipe() : nil
-        if let input { p.standardInput = input }
-        do {
-            try p.run()
-            if let input, let stdin {
-                input.fileHandleForWriting.write(Data(stdin.utf8))
-                input.fileHandleForWriting.closeFile()
-            }
-            if let timeout {
-                let deadline = Date().addingTimeInterval(timeout)
-                while p.isRunning && Date() < deadline { Thread.sleep(forTimeInterval: 0.1) }
-                if p.isRunning { p.terminate() }
-            }
-            p.waitUntilExit()
-            let data = out.fileHandleForReading.readDataToEndOfFile()
-            return String(data: data, encoding: .utf8) ?? ""
-        } catch {
-            return ""
-        }
-    }
-
 }
 
 func withTimeout<T: Sendable>(
