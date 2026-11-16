@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://github.com/AhaYue/tiny-usage/releases/latest"><img src="https://img.shields.io/github/v/release/AhaYue/tiny-usage?style=flat&color=2563eb" alt="最新版本"></a>
+  <a href="https://github.com/AhaYue/tiny-usage/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush"><img src="https://img.shields.io/github/actions/workflow/status/AhaYue/tiny-usage/ci.yml?branch=main&amp;event=push&amp;label=BUILD" alt="构建状态"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-30363d?style=flat&logo=apple&logoColor=white" alt="macOS 14 或更高版本">
   <img src="https://img.shields.io/badge/Apple%20Silicon-30363d?style=flat" alt="Apple 芯片">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-30363d?style=flat" alt="MIT 许可"></a>
@@ -26,9 +27,7 @@
   <img src="docs/screenshot.png" width="460" alt="Tiny Usage 菜单栏和面板，显示 Claude 和 Codex 的额度条、重置倒计时和重置卡">
 </p>
 
-菜单栏的额度条用竖线标记当前周期离重置还有多久。点开面板可查看具体百分比、重置倒计时和可用的重置卡。
-
-在 **设置 → 在菜单栏显示** 可分别勾选 Claude、Codex 和 OpenCode Go。不勾选任何服务时，菜单栏仍会保留 Tiny Usage 图标，点开即可查看所有服务。
+<p align="center"><strong>不想动手，抬眼即知。</strong></p>
 
 ## 安装
 
@@ -49,6 +48,11 @@ brew install --cask ahayue/tap/tiny-usage
 应用支持自动检查更新，也可以在 **设置 → 检查更新**中手动检查。
 
 在 **设置 → 语言**中可选择「跟随系统」「English」或「简体中文」，切换即时生效。
+
+## 功能
+
+- 菜单栏的额度条用竖线标记当前周期离重置还有多久。点开面板可查看具体百分比、重置倒计时和可用的重置卡。
+- 在 **设置 → 在菜单栏显示** 可分别勾选 Claude、Codex 和 OpenCode Go。不勾选任何服务时，菜单栏仍会保留 Tiny Usage 图标，点开即可查看所有服务。
 
 ## 用量从哪里来
 

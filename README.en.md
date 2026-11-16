@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://github.com/AhaYue/tiny-usage/releases/latest"><img src="https://img.shields.io/github/v/release/AhaYue/tiny-usage?style=flat&color=2563eb" alt="Latest release"></a>
+  <a href="https://github.com/AhaYue/tiny-usage/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush"><img src="https://img.shields.io/github/actions/workflow/status/AhaYue/tiny-usage/ci.yml?branch=main&amp;event=push&amp;label=BUILD" alt="Build status"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-30363d?style=flat&logo=apple&logoColor=white" alt="macOS 14 or later">
   <img src="https://img.shields.io/badge/Apple%20Silicon-30363d?style=flat" alt="Apple Silicon">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-30363d?style=flat" alt="MIT License"></a>
@@ -26,9 +27,7 @@
   <img src="docs/screenshot.png" width="460" alt="Tiny Usage menu bar and panel showing Claude and Codex quota bars, reset countdowns, and reset credits">
 </p>
 
-The menu bar shows quota bars with a marker for the time left in each window. Click the menu bar item to see exact percentages, reset countdowns, and any available reset credits.
-
-In **Settings → Show in menu bar**, choose any combination of Claude, Codex, and OpenCode Go. If you uncheck them all, the Tiny Usage icon stays in the menu bar. Click it to see all services in the panel.
+<p align="center"><strong>See what’s left at a glance, without a click.</strong></p>
 
 ## Install
 
@@ -49,6 +48,11 @@ If you’re signed in to Claude Code, Tiny Usage can query its quota on first la
 Tiny Usage checks for updates automatically. To check manually, open **Settings → Check for updates**.
 
 Choose **Follow System**, **English**, or **简体中文** in **Settings → Language**. The change takes effect immediately.
+
+## Features
+
+- The menu bar shows quota bars with a marker for the time left in each window. Click the menu bar item to see exact percentages, reset countdowns, and any available reset credits.
+- In **Settings → Show in menu bar**, choose any combination of Claude, Codex, and OpenCode Go. If you uncheck them all, the Tiny Usage icon stays in the menu bar. Click it to see all services in the panel.
 
 ## How Tiny Usage reads your quota
 
