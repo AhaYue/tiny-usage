@@ -4,6 +4,18 @@ To release: add a `## [x.y.z]` section at the top with a `### English` and a `##
 
 发布新版本时，在最上面加一节 `## [x.y.z]`，分别写 `### English` 和 `### 中文` 两个列表，再推送 `vx.y.z` 标签。这一节会成为 GitHub Release 说明，应用内更新窗口按用户语言显示对应列表。
 
+## [1.1.3]
+
+### English
+
+- Settings puts menu bar controls first and groups refresh options together.
+- Service checkboxes line up on the right under Show in menu bar.
+
+### 中文
+
+- 设置优先显示菜单栏选项，刷新频率与手动刷新放在一起。
+- 「在菜单栏显示」的服务复选框在右侧竖排对齐。
+
 ## [1.1.2]
 
 ### English

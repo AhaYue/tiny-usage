@@ -297,26 +297,28 @@ struct SettingsFace: View {
             BrandingHeader(onGear: onBack, closing: true)
 
             VStack(spacing: 0) {
-                switchRow("power", L("Launch at login"), L("Opens Tiny Usage after you log in."),
-                          isOn: flags.launchAtLogin) { _ in settings.toggleLaunchAtLogin() }
-                row("key", L("Authorize reset credits"), L("Queries Claude reset credits and the full quota."), action: settings.authorize)
+                menuBarProvidersRow
+                pickerRow("menubar.rectangle", L("Menu bar"), nil,
+                          selection: Binding(get: { flags.menuStyle }, set: { settings.setMenuStyle($0); reload() }),
+                          options: MenuBarRenderer.Style.allCases.map { ($0.rawValue, $0.label) })
                 pickerRow("percent", L("Display"), L("Colour follows what's left."),
                           selection: Binding(get: { flags.showRemaining ? 0 : 1 },
                                              set: { settings.setShowRemaining($0 == 0); reload() }),
                           options: [(0, L("Remaining")), (1, L("Used"))])
-                pickerRow("menubar.rectangle", L("Menu bar"), nil,
-                          selection: Binding(get: { flags.menuStyle }, set: { settings.setMenuStyle($0); reload() }),
-                          options: MenuBarRenderer.Style.allCases.map { ($0.rawValue, $0.label) })
                 menuBarColorsRow
-                menuBarProvidersRow
-                pickerRow("globe", L("Language"), nil, selection: $language,
-                          options: AppLanguage.allCases.map { ($0, $0.label) })
+
                 pickerRow("timer", L("Refresh rate"), RefreshMode(rawValue: flags.refreshMode)?.detail,
                           selection: Binding(get: { flags.refreshMode }, set: { settings.setRefreshMode($0); reload() }),
                           options: RefreshMode.allCases.map { ($0.rawValue, $0.label) })
                 row("arrow.clockwise", L("Refresh usage"), nil, action: settings.refresh)
+                row("key", L("Authorize reset credits"), L("Queries Claude reset credits and the full quota."), action: settings.authorize)
                 row(OpenCodeGoConfiguration.iconName, OpenCodeGoConfiguration.name, L("Manage the key for Go quotas."), brandIcon: true,
                     action: settings.configureOpenCodeGo)
+
+                switchRow("power", L("Launch at login"), L("Opens Tiny Usage after you log in."),
+                          isOn: flags.launchAtLogin) { _ in settings.toggleLaunchAtLogin() }
+                pickerRow("globe", L("Language"), nil, selection: $language,
+                          options: AppLanguage.allCases.map { ($0, $0.label) })
                 row("folder", L("Open data folder"), nil, action: settings.openDataFolder)
                 if settings.canCheckForUpdates {
                     row("arrow.down.circle", L("Check for updates"), nil, action: settings.checkForUpdates)
@@ -390,7 +392,7 @@ struct SettingsFace: View {
     }
 
     private var menuBarProvidersRow: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        HStack(alignment: .top, spacing: 0) {
             HStack(spacing: 11) {
                 Image(systemName: "checklist")
                     .font(.system(size: 15, weight: .light))
@@ -400,8 +402,10 @@ struct SettingsFace: View {
                 Text(L("Show in menu bar"))
                     .font(.system(size: 13))
                     .foregroundStyle(Color.primary.opacity(0.92))
+                    .fixedSize(horizontal: true, vertical: false)
             }
-            HStack(spacing: 10) {
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 2) {
                 ForEach(MenuBarProvider.allCases, id: \.self) { provider in
                     Toggle(provider.title, isOn: Binding(get: { flags.menuBarProviders.contains(provider) }, set: { on in
                         var selection = flags.menuBarProviders
@@ -411,7 +415,10 @@ struct SettingsFace: View {
                     }))
                     .toggleStyle(.checkbox)
                     .controlSize(.small)
+                    // Mirror only the native checkbox so its label stays clickable on the left.
+                    .environment(\.layoutDirection, .rightToLeft)
                     .fixedSize()
+                    .frame(minHeight: 22)
                 }
             }
         }
