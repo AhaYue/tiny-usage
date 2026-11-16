@@ -30,7 +30,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot.png" width="460" alt="Tiny Usage 菜单栏和面板，显示 Claude 和 Codex 的额度条、重置倒计时和重置卡">
+  <img src="docs/tiny-usage-menu-bar.png" width="460" alt="Tiny Usage 菜单栏和面板，显示 Claude 和 Codex 的额度条、重置倒计时和重置卡">
 </p>
 
 <p align="center"><strong>不想动手，抬眼即知。</strong></p>
