@@ -66,7 +66,7 @@ Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **S
 
 ## What’s next
 
-I built Tiny Usage so I could see my remaining quota and reset times at a glance, without opening a website or running a command. That’s all I need this little app to do.
+I built Tiny Usage for a little peace of mind. I can glance at the menu bar to see how much quota I have left and when it resets. That’s as far as I plan to take it. It’s just a scrappy little tool.
 
 To keep the app lightweight, I’ll continue to support quota tracking for Claude, Codex, and OpenCode Go only. I won’t add other providers, third-party API routers, or API account balance checks.
 

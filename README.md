@@ -66,7 +66,7 @@ brew install --cask ahayue/tap/tiny-usage
 
 ## 后续维护
 
-我做 Tiny Usage，是因为想抬眼就知道还剩多少额度、什么时候重置，省去打开网页或输入命令的步骤。这个小工具把这件事做好就够了。
+Tiny Usage 就是图个省心。抬眼看看还剩多少额度、什么时候重置，就够了。维护范围也就到这儿，说到底就是个破工具。
 
 为了让 App 保持轻量，后续只维护 Claude、Codex 和 OpenCode Go 的额度显示，不接入其他服务或第三方 API 路由，也不提供 API 账户余额查询。
 
