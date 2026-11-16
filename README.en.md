@@ -51,6 +51,8 @@ If macOS blocks the first launch, go to **System Settings → Privacy & Security
 
 Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **Settings → OpenCode Go**.
 
+
+
 ## Features
 
 - **Menu bar**: See your remaining quota and a marker for time until reset.
@@ -59,6 +61,16 @@ Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **S
 - **Colors**: Choose default, subtle, or custom colors.
 - **Language**: Use English, Simplified Chinese, or your system language.
 - **Updates**: Automatic checks, with a manual check in Settings.
+
+
+
+## What’s next
+
+I built Tiny Usage so I could see my remaining quota and reset times at a glance, without opening a website or running a command. That’s all I need this little app to do.
+
+To keep the app lightweight, I’ll continue to support quota tracking for Claude, Codex, and OpenCode Go only. I won’t add other providers, third-party API routers, or API account balance checks.
+
+
 
 ## How Tiny Usage reads your quota
 

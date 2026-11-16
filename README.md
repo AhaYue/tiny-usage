@@ -51,6 +51,8 @@ brew install --cask ahayue/tap/tiny-usage
 
 已登录的 Claude Code 和 Codex 可以直接使用。OpenCode Go 在 **设置 → OpenCode Go** 接入。
 
+
+
 ## 功能
 
 - **菜单栏**：额度条显示剩余额度，竖线标记重置进度。
@@ -59,6 +61,16 @@ brew install --cask ahayue/tap/tiny-usage
 - **配色**：支持默认、低调或自定义配色。
 - **语言**：支持简体中文、English，也可跟随系统。
 - **更新**：自动检查，也可在设置中手动检查。
+
+
+
+## 后续维护
+
+我做 Tiny Usage，是因为想抬眼就知道还剩多少额度、什么时候重置，省去打开网页或输入命令的步骤。这个小工具把这件事做好就够了。
+
+为了让 App 保持轻量，后续只维护 Claude、Codex 和 OpenCode Go 的额度显示，不接入其他服务或第三方 API 路由，也不提供 API 账户余额查询。
+
+
 
 ## 用量从哪里来
 
