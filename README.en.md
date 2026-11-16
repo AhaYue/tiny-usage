@@ -24,6 +24,12 @@
 </p>
 
 <p align="center">
+  <em>Some numbers are reassuring to have in the menu bar.</em><br>
+  CPU 40%, RAM 76%, temperature 56 °C.<br>
+  Hmm… and ...
+</p>
+
+<p align="center">
   <img src="docs/screenshot.png" width="460" alt="Tiny Usage menu bar and panel showing Claude and Codex quota bars, reset countdowns, and reset credits">
 </p>
 
@@ -43,40 +49,35 @@ Or [download the DMG](https://github.com/AhaYue/tiny-usage/releases/latest/downl
 
 If macOS blocks the first launch, go to **System Settings → Privacy & Security → Open Anyway**.
 
-If you’re signed in to Claude Code, Tiny Usage can query its quota on first launch. For Codex, it uses your existing CLI login and local session history. To add OpenCode Go, open **Settings → OpenCode Go**.
-
-Tiny Usage checks for updates automatically. To check manually, open **Settings → Check for updates**.
-
-Choose **Follow System**, **English**, or **简体中文** in **Settings → Language**. The change takes effect immediately.
+Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **Settings → OpenCode Go**.
 
 ## Features
 
-- The menu bar shows quota bars with a marker for the time left in each window. Click the menu bar item to see exact percentages, reset countdowns, and any available reset credits.
-- In **Settings → Show in menu bar**, choose any combination of Claude, Codex, and OpenCode Go. If you uncheck them all, the Tiny Usage icon stays in the menu bar. Click it to see all services in the panel.
-- In **Settings → Menu bar colors**, choose Default colors, Subtle, or Custom colors. In Subtle mode, bars and percentages with at least 50% remaining match the menu bar icons. In Custom colors, click a swatch to set that quota range’s color using a hex value or the RGB sliders.
+- **Menu bar**: See your remaining quota and a marker for time until reset.
+- **Details panel**: Click for exact percentages, reset countdowns, and available reset credits.
+- **Service visibility**: Choose which services appear in the menu bar.
+- **Colors**: Choose default, subtle, or custom colors.
+- **Language**: Use English, Simplified Chinese, or your system language.
+- **Updates**: Automatic checks, with a manual check in Settings.
 
 ## How Tiny Usage reads your quota
 
-Tiny Usage uses your existing Claude and Codex setup, plus OpenCode Go if you connect it. It has no Tiny Usage account, backend, or telemetry. Provider queries go directly from your Mac.
-
-On first launch, Tiny Usage connects to the Claude Code status line. You can disconnect it in Settings.
+No sign-up required. Your Mac queries providers directly. Tiny Usage has no backend or telemetry.
 
 <details>
-<summary>Provider setup, optional authorization, and data sources</summary>
+<summary>Provider setup and authorization</summary>
 
-- **Claude Code.** Tiny Usage wraps `statusLine` in `~/.claude/settings.json` and keeps your existing status line running. It backs up the file as `settings.json.tiny-usage-backup` and saves only quota percentages and reset times from the status line. When fresh data is missing, it can run Claude Code’s built-in `/usage` with your existing CLI login to read the 5-hour and weekly quotas. Use **Settings → About → Claude status line → Disconnect** to restore the original status line. Tiny Usage will only reconnect the status line if you ask it to.
-- **More Claude details.** To get model limits and reset credits from Anthropic, authorize access from the Claude card using your existing Claude Code or Claude Desktop login. macOS asks for Keychain access only after you confirm. Tiny Usage reads these credentials without refreshing or writing them back.
-- **Codex.** Tiny Usage can use the CLI’s existing login to query OpenAI. It reads local session files from the same Codex directory as the login, including when `CODEX_HOME` is set.
-- **OpenCode Go.** In **Settings → OpenCode Go**, reuse the API key connected to the `opencode-go` provider or enter a personal key for the subscription’s workspace. Tiny Usage stores a manually entered key in the macOS Keychain and uses it to read the 5-hour, weekly, and monthly limits. **Open billing** opens the OpenCode Console for your workspace’s credit balance.
+- **Claude Code**: On first launch, Tiny Usage backs up your settings and connects to your existing `statusLine`. It keeps the original command running and saves only quota percentages and reset times. If data is stale, it can run `/usage` with your CLI login. Use **Settings → About → Claude status line → Disconnect** to restore the original status line and turn off automatic reconnection.
+- **Claude details (optional)**: Authorize your Claude Code or Claude Desktop login from the Claude card to see model limits and reset credits. Tiny Usage requests Keychain access after you confirm and only reads the credentials.
+- **Codex**: Uses your CLI login to query quota and reads session history from the same Codex directory, including a custom `CODEX_HOME`.
+- **OpenCode Go**: Reuse the `opencode-go` API key or enter a personal key for the subscription’s workspace. Manually entered keys are stored in Keychain. See 5-hour, weekly, and monthly limits, or click **Open billing** for the workspace credit balance.
 
 </details>
 
 <details>
 <summary>Performance</summary>
 
-Built with Swift, AppKit, and SwiftUI. Sparkle handles app updates. Closing the panel releases its view. The menu bar redraws once a minute and pauses during sleep.
-
-With the panel closed, a pre-Sparkle Apple Silicon build used 32.5 MiB of physical memory and averaged 0.17% of one CPU core over 30 seconds. See the [measurement notes](docs/PERFORMANCE.md).
+Closing the panel releases its view. The menu bar redraws once a minute and pauses during sleep. With the panel closed, a pre-Sparkle Apple Silicon build used 32.5 MiB of physical memory and averaged 0.17% of one CPU core over 30 seconds. See the [measurement notes](docs/PERFORMANCE.md).
 
 </details>
 
