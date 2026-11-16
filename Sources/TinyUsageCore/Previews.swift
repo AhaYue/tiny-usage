@@ -13,6 +13,11 @@ import SwiftUI
         .frame(width: PopoverMetrics.width, height: 620)
         .background(PopoverBackdrop())
 }
+#Preview("设置 · 菜单栏只显示 Codex") {
+    ScrollView { PreviewFixtures.settingsFace(menuBarProviders: [.codex]) }
+        .frame(width: PopoverMetrics.width, height: 620)
+        .background(PopoverBackdrop())
+}
 #Preview("服务卡片") {
     VStack(spacing: 11) {
         ForEach(DemoData.services()) { ServiceCard(service: $0, now: Date()) }

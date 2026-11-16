@@ -4,6 +4,18 @@ To release: add a `## [x.y.z]` section at the top with a `### English` and a `##
 
 发布新版本时，在最上面加一节 `## [x.y.z]`，分别写 `### English` 和 `### 中文` 两个列表，再推送 `vx.y.z` 标签。这一节会成为 GitHub Release 说明，应用内更新窗口按用户语言显示对应列表。
 
+## [1.1.1]
+
+### English
+
+- Choose which of Claude, Codex, and OpenCode Go appear in the menu bar. The panel still shows all services.
+- Menu bar quota bars and percentages use a cool white when at least 50% remains. The panel still uses green for this range.
+
+### 中文
+
+- 可分别选择是否在菜单栏显示 Claude、Codex 和 OpenCode Go。面板仍显示所有服务。
+- 剩余配额达到 50% 时，菜单栏的额度条和百分比显示冷白色。面板中这一档仍显示绿色。
+
 ## [1.1.0]
 
 ### English

@@ -43,11 +43,13 @@ enum DemoData {
 /// changes settings, credentials or real quota files.
 @MainActor
 enum PreviewFixtures {
-    static func settings(capture: ClaudeLocalCaptureState = .ready, didAuthorize: Bool = true) -> PopoverSettings {
+    static func settings(capture: ClaudeLocalCaptureState = .ready, didAuthorize: Bool = true,
+                         menuBarProviders: Set<MenuBarProvider> = MenuBarProvider.all) -> PopoverSettings {
         PopoverSettings(
             launchAtLogin: { false }, toggleLaunchAtLogin: {},
             localCaptureState: { capture },
             showRemaining: { true }, setShowRemaining: { _ in }, menuStyle: { 0 }, setMenuStyle: { _ in },
+            menuBarProviders: { menuBarProviders }, setMenuBarProviders: { _ in },
             refreshMode: { 0 }, setRefreshMode: { _ in },
             authorize: {}, didAuthorize: { didAuthorize }, refresh: {},
             openDataFolder: {}, about: {}, quit: {})
@@ -68,8 +70,9 @@ enum PreviewFixtures {
                       observedAt: cached ? now.addingTimeInterval(-3600) : now)
     }
 
-    static func settingsFace() -> some View {
-        SettingsFace(settings: settings(), language: .constant(AppLanguage.current), onBack: {})
+    static func settingsFace(menuBarProviders: Set<MenuBarProvider> = MenuBarProvider.all) -> some View {
+        SettingsFace(settings: settings(menuBarProviders: menuBarProviders),
+                     language: .constant(AppLanguage.current), onBack: {})
     }
 
     static let emptyClaude = ServiceStatus(name: "Claude", iconName: "claude", sessionResetAt: nil,
@@ -125,11 +128,14 @@ enum PreviewRenderer {
             }
         }
         // The settings face (the back of the card).
-        if wanted("settings") {
+        let settingsExamples: [(String, Set<MenuBarProvider>)] = [
+            ("settings", MenuBarProvider.all), ("settings-codex-only", [.codex])
+        ]
+        for (name, providers) in settingsExamples where wanted(name) {
             for dark in [true, false] {
-                snapshot(PreviewFixtures.settingsFace().padding(.vertical, 4)
+                snapshot(PreviewFixtures.settingsFace(menuBarProviders: providers).padding(.vertical, 4)
                             .background(PopoverBackdrop()),
-                         dark: dark, to: directory.appendingPathComponent("settings-\(dark ? "dark" : "light").png"))
+                         dark: dark, to: directory.appendingPathComponent("\(name)-\(dark ? "dark" : "light").png"))
             }
         }
         // First-run and recovery cards.

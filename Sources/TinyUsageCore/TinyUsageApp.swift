@@ -221,17 +221,26 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func renderTitle() {
         guard let button = statusItem?.button else { return }
-        var services = store.services.sortedByDisplayOrder()
-        // Bound width on crowded menu bars; all accounts remain in the panel and tooltip.
+        let selected = MenuBarProvider.selectedServices(from: store.services, selection: MenuBarProvider.selection())
+        var services = selected.sortedByDisplayOrder()
+        // Bound width on crowded menu bars; the tooltip still lists every selected account.
         let budget = max(100, (button.window?.screen?.auxiliaryTopRightArea?.width
             ?? button.window?.screen?.frame.width ?? 900) - 260)
-        while services.count > 1 && MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: Date()).size.width > budget {
+        let style = self.style, remaining = self.remaining, now = Date()
+        var image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now)
+        while services.count > 1 && image.size.width > budget {
             services.removeLast()
+            image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now)
         }
-        button.image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: Date())
+        let widthChanged = button.image?.size.width != image.size.width
+        button.image = image
         button.imagePosition = .imageOnly
-        button.toolTip = "Tiny Usage\n" + MenuBarRenderer.tooltip(services: store.services, remaining: remaining)
+        let usage = MenuBarRenderer.tooltip(services: selected, remaining: remaining)
+        button.toolTip = usage.isEmpty ? "Tiny Usage" : "Tiny Usage\n" + usage
         button.setAccessibilityLabel(button.toolTip)
+        if widthChanged, panel?.isVisible == true {
+            DispatchQueue.main.async { [weak self] in self?.positionPanel() }
+        }
     }
 
     @objc private func togglePanel() {
@@ -303,6 +312,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             setShowRemaining: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.showRemaining"); self?.renderTitle() },
             menuStyle: { [weak self] in self?.style.rawValue ?? 0 },
             setMenuStyle: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.menuStyle"); self?.renderTitle() },
+            menuBarProviders: { MenuBarProvider.selection() },
+            setMenuBarProviders: { [weak self] in MenuBarProvider.save($0); self?.renderTitle() },
             refreshMode: { RefreshMode.current.rawValue },
             setRefreshMode: { UserDefaults.standard.set($0, forKey: RefreshMode.defaultsKey) },
             languageDidChange: { [weak self] in

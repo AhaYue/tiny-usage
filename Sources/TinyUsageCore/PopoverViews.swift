@@ -229,6 +229,8 @@ struct PopoverSettings {
     var setShowRemaining: (Bool) -> Void
     var menuStyle: () -> Int
     var setMenuStyle: (Int) -> Void
+    var menuBarProviders: () -> Set<MenuBarProvider>
+    var setMenuBarProviders: (Set<MenuBarProvider>) -> Void
     var refreshMode: () -> Int
     var setRefreshMode: (Int) -> Void
     var languageDidChange: () -> Void = {}
@@ -265,6 +267,7 @@ struct SettingsFace: View {
         var launchAtLogin = false
         var showRemaining = true
         var menuStyle = 0
+        var menuBarProviders = MenuBarProvider.all
         var refreshMode = 0
     }
 
@@ -272,6 +275,7 @@ struct SettingsFace: View {
         flags = Flags(launchAtLogin: settings.launchAtLogin(),
                       showRemaining: settings.showRemaining(),
                       menuStyle: settings.menuStyle(),
+                      menuBarProviders: settings.menuBarProviders(),
                       refreshMode: settings.refreshMode())
     }
 
@@ -290,6 +294,7 @@ struct SettingsFace: View {
                 pickerRow("menubar.rectangle", L("Menu bar"), nil,
                           selection: Binding(get: { flags.menuStyle }, set: { settings.setMenuStyle($0); reload() }),
                           options: MenuBarRenderer.Style.allCases.map { ($0.rawValue, $0.label) })
+                menuBarProvidersRow
                 pickerRow("globe", L("Language"), nil, selection: $language,
                           options: AppLanguage.allCases.map { ($0, $0.label) })
                 pickerRow("timer", L("Refresh rate"), RefreshMode(rawValue: flags.refreshMode)?.detail,
@@ -314,6 +319,39 @@ struct SettingsFace: View {
         }
         .padding(.vertical, PopoverMetrics.faceVerticalPadding)
         .onAppear(perform: reload)
+    }
+
+    private var menuBarProvidersRow: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 11) {
+                Image(systemName: "checklist")
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundStyle(Color.primary.opacity(0.6))
+                    .frame(width: 22, height: 22)
+                    .accessibilityHidden(true)
+                Text(L("Show in menu bar"))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.primary.opacity(0.92))
+            }
+            HStack(spacing: 10) {
+                ForEach(MenuBarProvider.allCases, id: \.self) { provider in
+                    Toggle(provider.title, isOn: Binding(get: { flags.menuBarProviders.contains(provider) }, set: { on in
+                        var selection = flags.menuBarProviders
+                        if on { selection.insert(provider) } else { selection.remove(provider) }
+                        settings.setMenuBarProviders(selection)
+                        reload()
+                    }))
+                    .toggleStyle(.checkbox)
+                    .controlSize(.small)
+                    .fixedSize()
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(L("Show in menu bar"))
     }
 
     /// A setting with a few named values: the title and what it means on the left, a pop-up menu

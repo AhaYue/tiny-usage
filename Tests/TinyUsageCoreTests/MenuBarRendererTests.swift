@@ -2,6 +2,33 @@ import XCTest
 @testable import TinyUsageCore
 
 final class MenuBarRendererTests: XCTestCase {
+    func testProviderSelectionPreservesDefaultsAndExplicitlyHidingAll() throws {
+        let suite = "MenuBarProviderTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        XCTAssertEqual(MenuBarProvider.selection(in: defaults), [.claude, .codex, .openCodeGo])
+        MenuBarProvider.save([.codex, .openCodeGo], in: defaults)
+        let reloaded = try XCTUnwrap(UserDefaults(suiteName: suite))
+        XCTAssertEqual(MenuBarProvider.selection(in: reloaded), [.codex, .openCodeGo])
+        MenuBarProvider.save([], in: defaults)
+        XCTAssertTrue(MenuBarProvider.selection(in: reloaded).isEmpty)
+    }
+
+    func testMenuBarSelectionAppliesToAllAccountsForAProvider() {
+        func service(_ name: String, icon: String) -> ServiceStatus {
+            ServiceStatus(name: name, iconName: icon, sessionResetAt: nil, weeklyResetAt: nil,
+                          models: [], isAvailable: true, statusNote: nil)
+        }
+        let services = [service("Claude", icon: "claude"), service("Claude Desktop", icon: "claude"),
+                        service("Codex", icon: "codex"), service("Codex Work", icon: "codex"),
+                        service(OpenCodeGoConfiguration.name, icon: OpenCodeGoConfiguration.iconName)]
+
+        XCTAssertEqual(MenuBarProvider.selectedServices(from: services, selection: [.codex, .openCodeGo]).map(\.name),
+                       ["Codex", "Codex Work", OpenCodeGoConfiguration.name])
+        XCTAssertTrue(MenuBarProvider.selectedServices(from: services, selection: []).isEmpty)
+    }
+
     func testRemainingModeKeepsUnknownAndZero() {
         XCTAssertNil(MenuBarRenderer.displayedPercent(remaining: nil, showRemaining: true))
         XCTAssertEqual(MenuBarRenderer.displayedPercent(remaining: 0, showRemaining: true), 0)

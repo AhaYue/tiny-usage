@@ -2,6 +2,8 @@ import AppKit
 
 /// Original Tiny Usage renderer: one native image, no image files or web runtime.
 enum MenuBarRenderer {
+    private static let plentyColor = NSColor(hex: 0xF4F5FB)
+
     enum Style: Int, CaseIterable {
         case bars, percent, both
         var label: String { [L("Bars"), L("Percent"), L("Bars + %")][rawValue] }
@@ -16,6 +18,10 @@ enum MenuBarRenderer {
     }
     @MainActor
     static func image(services: [ServiceStatus], style: Style, remaining: Bool, now: Date) -> NSImage {
+        if services.isEmpty,
+           let icon = NSImage(systemSymbolName: "gauge.with.dots.needle.0percent", accessibilityDescription: "Tiny Usage") {
+            return icon
+        }
         let entries = services.sortedByDisplayOrder()
         let font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
         let textWidths = entries.map { ceil(percentText(service: $0, remaining: remaining, font: font).size().width) }
@@ -91,7 +97,9 @@ enum MenuBarRenderer {
     /// Battery-style colour for one window: by what's left, whatever the bar is showing. A reading
     /// that isn't live (stale snapshot, unavailable) stays grey so it can't pass for current.
     static func barColor(service: ServiceStatus, remaining quota: Int) -> NSColor {
-        service.isStale || !service.isAvailable ? .secondaryLabelColor : QuotaLevel(remaining: quota).color
+        guard service.isAvailable, !service.isStale else { return .secondaryLabelColor }
+        let level = QuotaLevel(remaining: quota)
+        return level == .plenty ? plentyColor : level.color
     }
 
     /// "62%·30%", each number in its own window's colour.
