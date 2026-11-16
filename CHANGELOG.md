@@ -4,6 +4,16 @@ To release: add a `## [x.y.z]` section at the top with a `### English` and a `##
 
 发布新版本时，在最上面加一节 `## [x.y.z]`，分别写 `### English` 和 `### 中文` 两个列表，再推送 `vx.y.z` 标签。这一节会成为 GitHub Release 说明，应用内更新窗口按用户语言显示对应列表。
 
+## [1.1.2]
+
+### English
+
+- Choose default, subtle, or custom menu bar colors. Subtle mode matches the menu bar icons when at least 50% remains. In custom mode, edit each quota color with a hex value or RGB sliders.
+
+### 中文
+
+- 菜单栏可选默认色彩、低调或自定义颜色。低调模式下，剩余配额达到 50% 时跟随菜单栏图标颜色。自定义模式可用十六进制色值或 RGB 滑块分别调整三档配额颜色。
+
 ## [1.1.1]
 
 ### English

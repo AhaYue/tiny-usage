@@ -2,8 +2,6 @@ import AppKit
 
 /// Original Tiny Usage renderer: one native image, no image files or web runtime.
 enum MenuBarRenderer {
-    private static let plentyColor = NSColor(hex: 0xF4F5FB)
-
     enum Style: Int, CaseIterable {
         case bars, percent, both
         var label: String { [L("Bars"), L("Percent"), L("Bars + %")][rawValue] }
@@ -17,14 +15,15 @@ enum MenuBarRenderer {
         return remaining ? left : 1 - left
     }
     @MainActor
-    static func image(services: [ServiceStatus], style: Style, remaining: Bool, now: Date) -> NSImage {
+    static func image(services: [ServiceStatus], style: Style, remaining: Bool, now: Date,
+                      colors: MenuBarColors = MenuBarColors()) -> NSImage {
         if services.isEmpty,
            let icon = NSImage(systemSymbolName: "gauge.with.dots.needle.0percent", accessibilityDescription: "Tiny Usage") {
             return icon
         }
         let entries = services.sortedByDisplayOrder()
         let font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium)
-        let textWidths = entries.map { ceil(percentText(service: $0, remaining: remaining, font: font).size().width) }
+        let textWidths = entries.map { ceil(percentText(service: $0, remaining: remaining, font: font, colors: colors).size().width) }
         let widths = textWidths.map { 16 + (style == .percent ? 0 : 48) + (style == .bars ? 0 : $0 + 5) }
         let width = max(22, widths.reduce(0, +) + CGFloat(max(0, entries.count - 1)) * 16)
         let image = NSImage(size: NSSize(width: width, height: 22), flipped: false) { _ in
@@ -64,7 +63,7 @@ enum MenuBarRenderer {
                         NSBezierPath(roundedRect: track, xRadius: 2, yRadius: 2).fill()
                         guard let quota = window.0 else { continue }
                         let value = displayedPercent(remaining: quota, showRemaining: remaining) ?? 0
-                        let color = barColor(service: service, remaining: quota)
+                        let color = barColor(service: service, remaining: quota, colors: colors)
                         if value > 0 {
                             color.setFill()
                             let filled = NSRect(x: x, y: y, width: max(1, 43 * CGFloat(value) / 100), height: 4)
@@ -84,7 +83,7 @@ enum MenuBarRenderer {
                 }
                 if style != .bars {
                     x += 5
-                    percentText(service: service, remaining: remaining, font: font)
+                    percentText(service: service, remaining: remaining, font: font, colors: colors)
                         .draw(at: NSPoint(x: x, y: 4))
                     x += textWidths[index]
                 }
@@ -96,19 +95,18 @@ enum MenuBarRenderer {
     }
     /// Battery-style colour for one window: by what's left, whatever the bar is showing. A reading
     /// that isn't live (stale snapshot, unavailable) stays grey so it can't pass for current.
-    static func barColor(service: ServiceStatus, remaining quota: Int) -> NSColor {
+    static func barColor(service: ServiceStatus, remaining quota: Int, colors: MenuBarColors) -> NSColor {
         guard service.isAvailable, !service.isStale else { return .secondaryLabelColor }
-        let level = QuotaLevel(remaining: quota)
-        return level == .plenty ? plentyColor : level.color
+        return colors.color(for: QuotaLevel(remaining: quota))
     }
 
     /// "62%·30%", each number in its own window's colour.
-    static func percentText(service: ServiceStatus, remaining: Bool, font: NSFont) -> NSAttributedString {
+    static func percentText(service: ServiceStatus, remaining: Bool, font: NSFont, colors: MenuBarColors) -> NSAttributedString {
         let out = NSMutableAttributedString()
         for (i, quota) in [service.sessionRemainingPercent, service.weeklyRemainingPercent].enumerated() {
             if i > 0 { out.append(NSAttributedString(string: "·", attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor])) }
             let shown = displayedPercent(remaining: quota, showRemaining: remaining).map { "\($0)%" } ?? "—"
-            let color = quota.map { barColor(service: service, remaining: $0) } ?? .secondaryLabelColor
+            let color = quota.map { barColor(service: service, remaining: $0, colors: colors) } ?? .secondaryLabelColor
             out.append(NSAttributedString(string: shown, attributes: [.font: font, .foregroundColor: color]))
         }
         return out

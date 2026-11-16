@@ -44,11 +44,15 @@ enum DemoData {
 @MainActor
 enum PreviewFixtures {
     static func settings(capture: ClaudeLocalCaptureState = .ready, didAuthorize: Bool = true,
-                         menuBarProviders: Set<MenuBarProvider> = MenuBarProvider.all) -> PopoverSettings {
-        PopoverSettings(
+                         menuBarProviders: Set<MenuBarProvider> = MenuBarProvider.all,
+                         colorMode: MenuBarColors.Mode = .standard) -> PopoverSettings {
+        var colors = MenuBarColors()
+        colors.mode = colorMode
+        return PopoverSettings(
             launchAtLogin: { false }, toggleLaunchAtLogin: {},
             localCaptureState: { capture },
             showRemaining: { true }, setShowRemaining: { _ in }, menuStyle: { 0 }, setMenuStyle: { _ in },
+            menuBarColors: { colors }, setMenuBarColors: { colors = $0 },
             menuBarProviders: { menuBarProviders }, setMenuBarProviders: { _ in },
             refreshMode: { 0 }, setRefreshMode: { _ in },
             authorize: {}, didAuthorize: { didAuthorize }, refresh: {},
@@ -70,9 +74,11 @@ enum PreviewFixtures {
                       observedAt: cached ? now.addingTimeInterval(-3600) : now)
     }
 
-    static func settingsFace(menuBarProviders: Set<MenuBarProvider> = MenuBarProvider.all) -> some View {
-        SettingsFace(settings: settings(menuBarProviders: menuBarProviders),
-                     language: .constant(AppLanguage.current), onBack: {})
+    static func settingsFace(menuBarProviders: Set<MenuBarProvider> = MenuBarProvider.all,
+                             colorMode: MenuBarColors.Mode = .standard) -> some View {
+        SettingsFace(settings: settings(menuBarProviders: menuBarProviders, colorMode: colorMode),
+                     language: .constant(AppLanguage.current), editingColor: colorMode == .custom ? .plenty : nil,
+                     onBack: {})
     }
 
     static let emptyClaude = ServiceStatus(name: "Claude", iconName: "claude", sessionResetAt: nil,
@@ -128,12 +134,14 @@ enum PreviewRenderer {
             }
         }
         // The settings face (the back of the card).
-        let settingsExamples: [(String, Set<MenuBarProvider>)] = [
-            ("settings", MenuBarProvider.all), ("settings-codex-only", [.codex])
+        let settingsExamples: [(String, Set<MenuBarProvider>, MenuBarColors.Mode)] = [
+            ("settings", MenuBarProvider.all, .standard),
+            ("settings-codex-only", [.codex], .standard),
+            ("settings-custom-colors", MenuBarProvider.all, .custom)
         ]
-        for (name, providers) in settingsExamples where wanted(name) {
+        for (name, providers, colorMode) in settingsExamples where wanted(name) {
             for dark in [true, false] {
-                snapshot(PreviewFixtures.settingsFace(menuBarProviders: providers).padding(.vertical, 4)
+                snapshot(PreviewFixtures.settingsFace(menuBarProviders: providers, colorMode: colorMode).padding(.vertical, 4)
                             .background(PopoverBackdrop()),
                          dark: dark, to: directory.appendingPathComponent("\(name)-\(dark ? "dark" : "light").png"))
             }

@@ -15,15 +15,13 @@ enum QuotaLevel: Equatable {
         }
     }
 
-    /// Fixed palette (same in light and dark): green #30D158, Claude orange #D97757, red #FF453A.
-    var color: NSColor {
-        let (dark, light): (UInt32, UInt32) = switch self {
-        case .plenty: (0x30D158, 0x30D158)
-        case .low: (0xD97757, 0xD97757)
-        case .critical: (0xFF453A, 0xFF453A)
-        }
-        return NSColor(name: nil) { appearance in
-            NSColor(hex: appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light)
+    var rgb: UInt32 {
+        switch self {
+        case .plenty: 0x30D158
+        case .low: 0xD97757
+        case .critical: 0xFF453A
         }
     }
+
+    var color: NSColor { NSColor(hex: rgb) }
 }

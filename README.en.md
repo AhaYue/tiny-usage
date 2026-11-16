@@ -53,6 +53,7 @@ Choose **Follow System**, **English**, or **简体中文** in **Settings → Lan
 
 - The menu bar shows quota bars with a marker for the time left in each window. Click the menu bar item to see exact percentages, reset countdowns, and any available reset credits.
 - In **Settings → Show in menu bar**, choose any combination of Claude, Codex, and OpenCode Go. If you uncheck them all, the Tiny Usage icon stays in the menu bar. Click it to see all services in the panel.
+- In **Settings → Menu bar colors**, choose Default colors, Subtle, or Custom colors. In Subtle mode, bars and percentages with at least 50% remaining match the menu bar icons. In Custom colors, click a swatch to set that quota range’s color using a hex value or the RGB sliders.
 
 ## How Tiny Usage reads your quota
 

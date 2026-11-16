@@ -68,6 +68,17 @@
 "Remaining" = "Remaining";
 "Used" = "Used";
 "Menu bar" = "Menu bar";
+"Menu bar colors" = "Menu bar colors";
+"Default colors" = "Default colors";
+"Subtle" = "Subtle";
+"Custom colors" = "Custom colors";
+"50%+" = "50%+";
+"20–49%" = "20–49%";
+"Below 20%" = "Below 20%";
+"Hex color" = "Hex color";
+"Red" = "Red";
+"Green" = "Green";
+"Blue" = "Blue";
 "Show in menu bar" = "Show in menu bar";
 "Bars" = "Bars";
 "Percent" = "Percent";

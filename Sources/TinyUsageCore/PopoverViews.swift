@@ -229,6 +229,8 @@ struct PopoverSettings {
     var setShowRemaining: (Bool) -> Void
     var menuStyle: () -> Int
     var setMenuStyle: (Int) -> Void
+    var menuBarColors: () -> MenuBarColors
+    var setMenuBarColors: (MenuBarColors) -> Void
     var menuBarProviders: () -> Set<MenuBarProvider>
     var setMenuBarProviders: (Set<MenuBarProvider>) -> Void
     var refreshMode: () -> Int
@@ -262,11 +264,21 @@ struct SettingsFace: View {
     /// showing whatever it showed first — a switch showing on for a setting that was actually off.
     @State private var flags = Flags()
     @State private var hovered: String?
+    @State private var editingColor: QuotaLevel?
+
+    init(settings: PopoverSettings, language: Binding<AppLanguage>, editingColor: QuotaLevel? = nil,
+         onBack: @escaping () -> Void) {
+        self.settings = settings
+        _language = language
+        _editingColor = State(initialValue: editingColor)
+        self.onBack = onBack
+    }
 
     private struct Flags {
         var launchAtLogin = false
         var showRemaining = true
         var menuStyle = 0
+        var menuBarColors = MenuBarColors()
         var menuBarProviders = MenuBarProvider.all
         var refreshMode = 0
     }
@@ -275,6 +287,7 @@ struct SettingsFace: View {
         flags = Flags(launchAtLogin: settings.launchAtLogin(),
                       showRemaining: settings.showRemaining(),
                       menuStyle: settings.menuStyle(),
+                      menuBarColors: settings.menuBarColors(),
                       menuBarProviders: settings.menuBarProviders(),
                       refreshMode: settings.refreshMode())
     }
@@ -294,6 +307,7 @@ struct SettingsFace: View {
                 pickerRow("menubar.rectangle", L("Menu bar"), nil,
                           selection: Binding(get: { flags.menuStyle }, set: { settings.setMenuStyle($0); reload() }),
                           options: MenuBarRenderer.Style.allCases.map { ($0.rawValue, $0.label) })
+                menuBarColorsRow
                 menuBarProvidersRow
                 pickerRow("globe", L("Language"), nil, selection: $language,
                           options: AppLanguage.allCases.map { ($0, $0.label) })
@@ -319,6 +333,60 @@ struct SettingsFace: View {
         }
         .padding(.vertical, PopoverMetrics.faceVerticalPadding)
         .onAppear(perform: reload)
+    }
+
+    private var menuBarColorsRow: some View {
+        VStack(spacing: 0) {
+            pickerRow("paintpalette", L("Menu bar colors"), nil,
+                      selection: Binding(get: { flags.menuBarColors.mode }, set: { mode in
+                          flags.menuBarColors.mode = mode
+                          editingColor = nil
+                          settings.setMenuBarColors(flags.menuBarColors)
+                      }),
+                      options: MenuBarColors.Mode.allCases.map { ($0, $0.label) })
+            if flags.menuBarColors.mode == .custom {
+                HStack(spacing: 4) {
+                    quotaColorSwatch(L("50%+"), level: .plenty)
+                    quotaColorSwatch(L("20–49%"), level: .low)
+                    quotaColorSwatch(L("Below 20%"), level: .critical)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
+                if let editingColor {
+                    MenuBarColorEditor(rgb: Binding(get: { flags.menuBarColors[editingColor] }, set: { rgb in
+                        flags.menuBarColors[editingColor] = rgb
+                        settings.setMenuBarColors(flags.menuBarColors)
+                    }))
+                    .id(editingColor)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                }
+            }
+        }
+    }
+
+    private func quotaColorSwatch(_ title: String, level: QuotaLevel) -> some View {
+        let rgb = flags.menuBarColors[level]
+        return Button {
+            editingColor = editingColor == level ? nil : level
+        } label: {
+            VStack(spacing: 3) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(hex: rgb))
+                    .overlay(RoundedRectangle(cornerRadius: 4)
+                        .strokeBorder(Color.primary.opacity(editingColor == level ? 0.9 : 0.25), lineWidth: 1))
+                    .frame(width: 33, height: 17)
+                Text(title)
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityValue(String(format: "#%06X", rgb))
+        .accessibilityAddTraits(editingColor == level ? .isSelected : [])
     }
 
     private var menuBarProvidersRow: some View {

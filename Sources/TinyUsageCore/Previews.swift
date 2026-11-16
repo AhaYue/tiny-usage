@@ -34,4 +34,9 @@ import SwiftUI
 #Preview("OpenCode Go · 缓存用量") {
     PreviewFixtures.panel(PreviewFixtures.store([PreviewFixtures.openCodeGo(cached: true)]))
 }
+#Preview("设置 · 自定义菜单栏配色") {
+    ScrollView { PreviewFixtures.settingsFace(colorMode: .custom) }
+        .frame(width: PopoverMetrics.width, height: 620)
+        .background(PopoverBackdrop())
+}
 #endif

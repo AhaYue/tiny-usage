@@ -5,6 +5,21 @@ import SwiftUI
 
 private final class QuotaPanel: NSPanel {
     override var canBecomeKey: Bool { true }
+
+    // An accessory app has no Edit menu to route shortcuts to the active text field.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.intersection([.command, .shift, .control, .option]) == .command,
+           let editor = firstResponder as? NSTextView, editor.isFieldEditor {
+            switch event.charactersIgnoringModifiers?.lowercased() {
+            case "a": editor.selectAll(nil); return true
+            case "c": editor.copy(nil); return true
+            case "v": editor.paste(nil); return true
+            case "x": editor.cut(nil); return true
+            default: break
+            }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 }
 
 @MainActor
@@ -48,6 +63,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = item
         store.$services.receive(on: RunLoop.main).sink { [weak self] _ in self?.renderTitle() }.store(in: &subscribers)
         NSApp.publisher(for: \.effectiveAppearance).receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.renderTitle() }.store(in: &subscribers)
+        item.button?.publisher(for: \.effectiveAppearance, options: [.new]).receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.renderTitle() }.store(in: &subscribers)
         renderTitle()
         wireClaudeHookIfNeeded()
@@ -227,10 +244,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let budget = max(100, (button.window?.screen?.auxiliaryTopRightArea?.width
             ?? button.window?.screen?.frame.width ?? 900) - 260)
         let style = self.style, remaining = self.remaining, now = Date()
-        var image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now)
+        let colors = MenuBarColors.load()
+        var image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now, colors: colors)
         while services.count > 1 && image.size.width > budget {
             services.removeLast()
-            image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now)
+            image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now, colors: colors)
         }
         let widthChanged = button.image?.size.width != image.size.width
         button.image = image
@@ -312,6 +330,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             setShowRemaining: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.showRemaining"); self?.renderTitle() },
             menuStyle: { [weak self] in self?.style.rawValue ?? 0 },
             setMenuStyle: { [weak self] in UserDefaults.standard.set($0, forKey: "tinyusage.menuStyle"); self?.renderTitle() },
+            menuBarColors: { MenuBarColors.load() },
+            setMenuBarColors: { [weak self] colors in colors.save(); self?.renderTitle() },
             menuBarProviders: { MenuBarProvider.selection() },
             setMenuBarProviders: { [weak self] in MenuBarProvider.save($0); self?.renderTitle() },
             refreshMode: { RefreshMode.current.rawValue },

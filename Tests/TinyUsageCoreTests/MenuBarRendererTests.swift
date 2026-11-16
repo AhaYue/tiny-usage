@@ -1,7 +1,38 @@
+import AppKit
 import XCTest
 @testable import TinyUsageCore
 
 final class MenuBarRendererTests: XCTestCase {
+    func testColorModesPreserveIndependentlyEditedQuotaColors() throws {
+        let suite = "MenuBarColorsTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        var colors = MenuBarColors.load(from: defaults)
+        XCTAssertEqual(colors.mode, .standard)
+        colors.mode = .custom
+        colors[.plenty] = try XCTUnwrap(MenuBarColorEditor.parseHex("#F4F5FB"))
+        colors[.low] = try XCTUnwrap(MenuBarColorEditor.parseHex("663399"))
+        colors[.critical] = try XCTUnwrap(MenuBarColorEditor.parseHex("4589ab"))
+        XCTAssertNil(MenuBarColorEditor.parseHex("#123"))
+        XCTAssertNil(MenuBarColorEditor.parseHex("#FFFFFZ"))
+        colors.save(to: defaults)
+
+        colors = MenuBarColors.load(from: defaults)
+        XCTAssertEqual(colors.mode, .custom)
+        XCTAssertEqual(colors.color(for: .plenty), NSColor(hex: 0xF4F5FB))
+        XCTAssertEqual(colors.color(for: .low), NSColor(hex: 0x663399))
+        XCTAssertEqual(colors.color(for: .critical), NSColor(hex: 0x4589AB))
+
+        colors.mode = .subtle
+        colors.save(to: defaults)
+        colors = MenuBarColors.load(from: defaults)
+        XCTAssertEqual(colors.color(for: .plenty), .labelColor)
+        XCTAssertEqual(colors.color(for: .low), QuotaLevel.low.color)
+        XCTAssertEqual(colors.color(for: .critical), QuotaLevel.critical.color)
+        XCTAssertEqual(colors[.plenty], 0xF4F5FB)
+    }
+
     func testProviderSelectionPreservesDefaultsAndExplicitlyHidingAll() throws {
         let suite = "MenuBarProviderTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
