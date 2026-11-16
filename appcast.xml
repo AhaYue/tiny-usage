@@ -6,6 +6,26 @@
     <description>Tiny Usage update feed</description>
     <language>en</language>
     <item>
+      <title>Tiny Usage 1.1.1</title>
+      <sparkle:version>1001001</sparkle:version>
+      <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 16 Nov 2026 03:28:44 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<ul>
+<li>Choose which of Claude, Codex, and OpenCode Go appear in the menu bar. The panel still shows all services.</li>
+<li>Menu bar quota bars and percentages use a cool white when at least 50% remains. The panel still uses green for this range.</li>
+</ul>
+      ]]></description>
+      <description xml:lang="zh-Hans"><![CDATA[
+<ul>
+<li>可分别选择是否在菜单栏显示 Claude、Codex 和 OpenCode Go。面板仍显示所有服务。</li>
+<li>剩余配额达到 50% 时，菜单栏的额度条和百分比显示冷白色。面板中这一档仍显示绿色。</li>
+</ul>
+      ]]></description>
+      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.1.1/TinyUsage-1.1.1.zip" sparkle:edSignature="Kse1xkYfJtDF2nsVUkTanKEwKbowiei896zM7HO/A8xZ6SfhzASADEYCftL0XwUT7n+nQmcRZzI+U2P/WZBMAw==" length="1545206" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Tiny Usage 1.1.0</title>
       <sparkle:version>1001000</sparkle:version>
       <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
