@@ -30,7 +30,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/tiny-usage-menu-bar.png" width="460" alt="Tiny Usage menu bar and panel showing Claude and Codex quota bars, reset countdowns, and reset credits">
+  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage menu bar and panel showing Claude and Codex quota bars, reset countdowns, and reset credits">
 </p>
 
 <p align="center"><strong>See what’s left at a glance, without a click.</strong></p>
