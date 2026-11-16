@@ -6,6 +6,24 @@
     <description>Tiny Usage update feed</description>
     <language>en</language>
     <item>
+      <title>Tiny Usage 1.1.2</title>
+      <sparkle:version>1001002</sparkle:version>
+      <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Mon, 16 Nov 2026 04:00:40 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<ul>
+<li>Choose default, subtle, or custom menu bar colors. Subtle mode matches the menu bar icons when at least 50% remains. In custom mode, edit each quota color with a hex value or RGB sliders.</li>
+</ul>
+      ]]></description>
+      <description xml:lang="zh-Hans"><![CDATA[
+<ul>
+<li>菜单栏可选默认色彩、低调或自定义颜色。低调模式下，剩余配额达到 50% 时跟随菜单栏图标颜色。自定义模式可用十六进制色值或 RGB 滑块分别调整三档配额颜色。</li>
+</ul>
+      ]]></description>
+      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.1.2/TinyUsage-1.1.2.zip" sparkle:edSignature="oJXsnOXW+OFhQwi+gaucEL/0Ar4gq+QeaQFatUqhwKypmalQzE4S1+zNDJ4m/F2KFY8uLjjQiYMp9LPkpt+NBQ==" length="1573665" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Tiny Usage 1.1.1</title>
       <sparkle:version>1001001</sparkle:version>
       <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
