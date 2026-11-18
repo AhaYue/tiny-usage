@@ -4,6 +4,16 @@ To release: add a `## [x.y.z]` section at the top with a `### English` and a `##
 
 发布新版本时，在最上面加一节 `## [x.y.z]`，分别写 `### English` 和 `### 中文` 两个列表，再推送 `vx.y.z` 标签。这一节会成为 GitHub Release 说明，应用内更新窗口按用户语言显示对应列表。
 
+## [1.2.0]
+
+### English
+
+- The menu bar icon no longer shows a hover tooltip that follows the cursor. Account details remain available to VoiceOver.
+
+### 中文
+
+- 菜单栏图标不再显示跟随鼠标的悬停提示框，账号详情仍可由 VoiceOver 朗读。
+
 ## [1.1.3]
 
 ### English

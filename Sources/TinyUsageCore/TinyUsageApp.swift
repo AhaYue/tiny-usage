@@ -253,9 +253,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let widthChanged = button.image?.size.width != image.size.width
         button.image = image
         button.imagePosition = .imageOnly
+        // No hover tooltip: macOS draws it as a floating box that follows the cursor along the menu bar.
+        // The account summary stays available to VoiceOver through the accessibility label.
         let usage = MenuBarRenderer.tooltip(services: selected, remaining: remaining)
-        button.toolTip = usage.isEmpty ? "Tiny Usage" : "Tiny Usage\n" + usage
-        button.setAccessibilityLabel(button.toolTip)
+        button.setAccessibilityLabel(usage.isEmpty ? "Tiny Usage" : "Tiny Usage\n" + usage)
         if widthChanged, panel?.isVisible == true {
             DispatchQueue.main.async { [weak self] in self?.positionPanel() }
         }
