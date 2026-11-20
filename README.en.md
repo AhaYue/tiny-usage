@@ -5,8 +5,22 @@
 <h1 align="center">Tiny Usage</h1>
 
 <p align="center">
-  See how much Claude, Codex, and OpenCode Go quota you have left and when it resets, right from your Mac menu bar.
+  <strong>No need to open the panel.</strong><br>
+  Your remaining quotas for Claude, Codex, and OpenCode Go sit side by side in your Mac menu bar.<br>
+  <strong>Native macOS app · ~1 MB DMG</strong>
 </p>
+
+<p align="center">
+  <em>Some numbers are reassuring to have in the menu bar.</em><br>
+  CPU 40%, RAM 76%, temperature 56 °C.<br>
+  Hmm… and quota?
+</p>
+
+<p align="center">
+  <img src="docs/menu-bar.png" alt="Claude and Codex quota bars and remaining percentages side by side in the menu bar">
+</p>
+
+<p align="center"><strong>See what’s left at a glance.</strong></p>
 
 <p align="center">
   <a href="https://tiny-usage.ayue.dev/en">Website</a>
@@ -22,18 +36,6 @@
   <img src="https://img.shields.io/badge/Apple%20Silicon-30363d?style=flat" alt="Apple Silicon">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-30363d?style=flat" alt="MIT License"></a>
 </p>
-
-<p align="center">
-  <em>Some numbers are reassuring to have in the menu bar.</em><br>
-  CPU 40%, RAM 76%, temperature 56 °C.<br>
-  Hmm… and ...
-</p>
-
-<p align="center">
-  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage menu bar and panel showing Claude and Codex quota bars, reset countdowns, and reset credits">
-</p>
-
-<p align="center"><strong>See what’s left at a glance, without a click.</strong></p>
 
 ## Install
 
@@ -55,14 +57,17 @@ Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **S
 
 ## Features
 
-- **Menu bar**: See your remaining quota and a marker for time until reset.
+- **Menu bar**: Show quota as bars, percentages, or both side by side.
+- **Reset timing**: A tick on each quota bar shows how close it is to resetting.
 - **Details panel**: Click for exact percentages, reset countdowns, and available reset credits.
 - **Service visibility**: Choose which services appear in the menu bar.
 - **Colors**: Choose default, subtle, or custom colors.
 - **Language**: Use English, Simplified Chinese, or your system language.
 - **Updates**: Automatic checks, with a manual check in Settings.
 
-
+<p align="center">
+  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage details panel showing remaining Claude and Codex quotas, reset countdowns, and reset credits">
+</p>
 
 ## What’s next
 
@@ -89,7 +94,7 @@ No sign-up required. Your Mac queries providers directly. Tiny Usage has no back
 <details>
 <summary>Performance</summary>
 
-Closing the panel releases its view. The menu bar redraws once a minute and pauses during sleep. With the panel closed, a pre-Sparkle Apple Silicon build used 32.5 MiB of physical memory and averaged 0.17% of one CPU core over 30 seconds. See the [measurement notes](docs/PERFORMANCE.md).
+Closing the panel releases its view. The menu bar redraws once a minute and pauses during sleep. With the panel closed it uses about 20 MiB of physical memory and averages 0.2–0.3% of one CPU core while idle (0.22% measured over 180 seconds). See the [measurement notes](docs/PERFORMANCE.md).
 
 </details>
 

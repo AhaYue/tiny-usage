@@ -21,6 +21,17 @@
 
 修复后同一构建空闲 60 秒累计 CPU 约 0.1 s（`ps` 读数 0.0%），RSS 稳定在约 77 MiB。回归测试见 `testRenderKeyChangesOnlyWhenTheImageWould`。
 
+## 1.3.0 复测
+
+2026-11-20 在同一台 M4 上对 1.3.0 release 构建复测，面板关闭、正常取数：
+
+| 场景 | 物理内存 (footprint) | 峰值 | 平均 CPU（单核 %） | 原始文件 |
+|---|---|---|---|---|
+| 空闲，90 秒 | 19.9 MiB | 21.7 MiB | 0.31% | `runtime/performance-1.3.0-idle.json` |
+| 空闲，180 秒 | 19.9 MiB | 21.7 MiB | **0.22%** | `runtime/performance-1.3.0-idle-2.json` |
+
+内存比 2026-11-13 那组低（32.5 MiB → 19.9 MiB）：那一组测的是集成 Sparkle 之前的构建。两组都只是短时采样，不代表长期走势。
+
 上表测量于加入 Sparkle 之前的构建（当时包体积 9.4 MiB，无第三方动态库，应用名还是 AY Usage）。1.0.0 的包体积约 3.5 MiB（DMG 约 1 MB），内含 Sparkle.framework；内存和 CPU 尚未在该版本上重新采样。
 
 ## 怎么读这些数字

@@ -1,0 +1,125 @@
+{
+  "mode": "normal; panel explicitly hidden before sampling",
+  "build": "release arm64",
+  "pid": 71867,
+  "measuredAt": "2026-11-20T09:59:13.054549+08:00",
+  "durationSeconds": 90.25,
+  "averageCpuPercentOneCore": 0.31,
+  "samples": [
+    {
+      "elapsedSeconds": 0.0,
+      "rssMiB": 81.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.81
+    },
+    {
+      "elapsedSeconds": 5.01,
+      "rssMiB": 81.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.81
+    },
+    {
+      "elapsedSeconds": 10.02,
+      "rssMiB": 81.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.81
+    },
+    {
+      "elapsedSeconds": 15.03,
+      "rssMiB": 81.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.81
+    },
+    {
+      "elapsedSeconds": 20.04,
+      "rssMiB": 81.95,
+      "psCpuPercent": 5.5,
+      "totalCpuSeconds": 0.84
+    },
+    {
+      "elapsedSeconds": 25.05,
+      "rssMiB": 81.95,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.84
+    },
+    {
+      "elapsedSeconds": 30.05,
+      "rssMiB": 81.84,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.84
+    },
+    {
+      "elapsedSeconds": 35.07,
+      "rssMiB": 81.08,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.84
+    },
+    {
+      "elapsedSeconds": 40.11,
+      "rssMiB": 82.06,
+      "psCpuPercent": 5.9,
+      "totalCpuSeconds": 0.88
+    },
+    {
+      "elapsedSeconds": 45.12,
+      "rssMiB": 82.09,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.94
+    },
+    {
+      "elapsedSeconds": 50.13,
+      "rssMiB": 81.23,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.94
+    },
+    {
+      "elapsedSeconds": 55.16,
+      "rssMiB": 81.23,
+      "psCpuPercent": 1.3,
+      "totalCpuSeconds": 0.96
+    },
+    {
+      "elapsedSeconds": 60.17,
+      "rssMiB": 81.56,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 0.99
+    },
+    {
+      "elapsedSeconds": 65.18,
+      "rssMiB": 76.22,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.06
+    },
+    {
+      "elapsedSeconds": 70.2,
+      "rssMiB": 76.3,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.07
+    },
+    {
+      "elapsedSeconds": 75.21,
+      "rssMiB": 75.41,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.09
+    },
+    {
+      "elapsedSeconds": 80.22,
+      "rssMiB": 74.47,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.09
+    },
+    {
+      "elapsedSeconds": 85.23,
+      "rssMiB": 74.42,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.09
+    },
+    {
+      "elapsedSeconds": 90.25,
+      "rssMiB": 74.42,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.09
+    }
+  ],
+  "limitation": "Short sample including any scheduled refresh; not a long-term leak benchmark. RSS includes shared resident mappings."
+}

@@ -5,8 +5,22 @@
 <h1 align="center">Tiny Usage</h1>
 
 <p align="center">
-  在 Mac 菜单栏查看 Claude、Codex 和 OpenCode Go 的剩余额度和重置时间。
+  <strong>不用点开面板。</strong><br>
+  Claude、Codex 和 OpenCode Go 的剩余额度并排显示在 Mac 菜单栏。<br>
+  <strong>原生 macOS 应用 · DMG 约 1 MB</strong>
 </p>
+
+<p align="center">
+  <em>有些数字，挂在菜单栏才安心。</em><br>
+  CPU 40%、RAM 76%、温度 56 °C。<br>
+  嗯……那额度呢？
+</p>
+
+<p align="center">
+  <img src="docs/menu-bar.png" alt="菜单栏上并排显示 Claude 和 Codex 的额度条与剩余百分比">
+</p>
+
+<p align="center"><strong>不想动手，抬眼即知。</strong></p>
 
 <p align="center">
   <a href="https://tiny-usage.ayue.dev">官网</a>
@@ -22,18 +36,6 @@
   <img src="https://img.shields.io/badge/Apple%20Silicon-30363d?style=flat" alt="Apple 芯片">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-30363d?style=flat" alt="MIT 许可"></a>
 </p>
-
-<p align="center">
-  <em>有些数字，挂在菜单栏才安心。</em><br>
-  CPU 40%、RAM 76%、温度 56 °C。<br>
-  嗯…… and ...
-</p>
-
-<p align="center">
-  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage 菜单栏和面板，显示 Claude 和 Codex 的额度条、重置倒计时和重置卡">
-</p>
-
-<p align="center"><strong>不想动手，抬眼即知。</strong></p>
 
 ## 安装
 
@@ -55,14 +57,17 @@ brew install --cask ahayue/tap/tiny-usage
 
 ## 功能
 
-- **菜单栏**：额度条显示剩余额度，竖线标记重置进度。
+- **菜单栏**：额度可显示为进度条、百分比，或两者并排。
+- **重置进度**：额度条上的竖线标记距离重置还有多久。
 - **详情面板**：点开查看剩余百分比、重置倒计时和可用的重置卡。
 - **服务显示**：选择哪些服务出现在菜单栏。
 - **配色**：支持默认、低调或自定义配色。
 - **语言**：支持简体中文、English，也可跟随系统。
 - **更新**：自动检查，也可在设置中手动检查。
 
-
+<p align="center">
+  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage 详情面板显示 Claude 和 Codex 的剩余额度、重置倒计时和重置卡">
+</p>
 
 ## 后续维护
 
@@ -89,7 +94,7 @@ Tiny Usage 就是图个省心。抬眼看看还剩多少额度、什么时候重
 <details>
 <summary>性能</summary>
 
-关闭面板后释放视图，菜单栏每分钟重绘，睡眠时暂停。集成 Sparkle 前的 Apple 芯片版本在面板关闭时占用 32.5 MiB 物理内存，30 秒内平均占用单核 CPU 的 0.17%。见[性能实测](docs/PERFORMANCE.md)。
+关闭面板后释放视图，菜单栏每分钟重绘，睡眠时暂停。面板关闭时占用约 20 MiB 物理内存，空闲时平均占用单核 CPU 的 0.2%–0.3%（180 秒实测 0.22%）。见[性能实测](docs/PERFORMANCE.md)。
 
 </details>
 

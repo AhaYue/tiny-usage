@@ -1,0 +1,233 @@
+{
+  "mode": "normal; panel explicitly hidden before sampling",
+  "build": "release arm64",
+  "pid": 71867,
+  "measuredAt": "2026-11-20T10:02:37.394717+08:00",
+  "durationSeconds": 180.47,
+  "averageCpuPercentOneCore": 0.216,
+  "samples": [
+    {
+      "elapsedSeconds": 0.0,
+      "rssMiB": 73.83,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.18
+    },
+    {
+      "elapsedSeconds": 5.01,
+      "rssMiB": 73.05,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.18
+    },
+    {
+      "elapsedSeconds": 10.03,
+      "rssMiB": 73.0,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.18
+    },
+    {
+      "elapsedSeconds": 15.05,
+      "rssMiB": 73.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.2
+    },
+    {
+      "elapsedSeconds": 20.06,
+      "rssMiB": 73.72,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.22
+    },
+    {
+      "elapsedSeconds": 25.07,
+      "rssMiB": 70.16,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.22
+    },
+    {
+      "elapsedSeconds": 30.08,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.22
+    },
+    {
+      "elapsedSeconds": 35.09,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.22
+    },
+    {
+      "elapsedSeconds": 40.1,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.22
+    },
+    {
+      "elapsedSeconds": 45.11,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.22
+    },
+    {
+      "elapsedSeconds": 50.13,
+      "rssMiB": 73.52,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.25
+    },
+    {
+      "elapsedSeconds": 55.14,
+      "rssMiB": 75.61,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.31
+    },
+    {
+      "elapsedSeconds": 60.16,
+      "rssMiB": 74.86,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.33
+    },
+    {
+      "elapsedSeconds": 65.16,
+      "rssMiB": 69.94,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.33
+    },
+    {
+      "elapsedSeconds": 70.17,
+      "rssMiB": 69.92,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.33
+    },
+    {
+      "elapsedSeconds": 75.18,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.33
+    },
+    {
+      "elapsedSeconds": 80.19,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.33
+    },
+    {
+      "elapsedSeconds": 85.21,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.33
+    },
+    {
+      "elapsedSeconds": 90.22,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.34
+    },
+    {
+      "elapsedSeconds": 95.23,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.34
+    },
+    {
+      "elapsedSeconds": 100.25,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.34
+    },
+    {
+      "elapsedSeconds": 105.26,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.34
+    },
+    {
+      "elapsedSeconds": 110.28,
+      "rssMiB": 69.53,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.34
+    },
+    {
+      "elapsedSeconds": 115.29,
+      "rssMiB": 74.58,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.42
+    },
+    {
+      "elapsedSeconds": 120.3,
+      "rssMiB": 75.41,
+      "psCpuPercent": 3.1,
+      "totalCpuSeconds": 1.44
+    },
+    {
+      "elapsedSeconds": 125.32,
+      "rssMiB": 76.12,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 130.33,
+      "rssMiB": 76.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 135.34,
+      "rssMiB": 76.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 140.36,
+      "rssMiB": 76.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 145.37,
+      "rssMiB": 76.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 150.38,
+      "rssMiB": 76.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 155.4,
+      "rssMiB": 76.11,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.46
+    },
+    {
+      "elapsedSeconds": 160.41,
+      "rssMiB": 76.23,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.5
+    },
+    {
+      "elapsedSeconds": 165.43,
+      "rssMiB": 76.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.5
+    },
+    {
+      "elapsedSeconds": 170.44,
+      "rssMiB": 76.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.5
+    },
+    {
+      "elapsedSeconds": 175.45,
+      "rssMiB": 76.19,
+      "psCpuPercent": 0.0,
+      "totalCpuSeconds": 1.5
+    },
+    {
+      "elapsedSeconds": 180.47,
+      "rssMiB": 74.92,
+      "psCpuPercent": 2.4,
+      "totalCpuSeconds": 1.57
+    }
+  ],
+  "limitation": "Short sample including any scheduled refresh; not a long-term leak benchmark. RSS includes shared resident mappings."
+}
