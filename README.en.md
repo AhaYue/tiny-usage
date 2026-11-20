@@ -4,17 +4,19 @@
 
 <h1 align="center">Tiny Usage</h1>
 
+<p align="center"><sub>Native macOS app · Apple Silicon · ~1 MB DMG</sub></p>
+
+<h3 align="center">No need to lift a finger.</h3>
+
 <p align="center">
-  <strong>No need to lift a finger.</strong><br>
   Most quota tools make you open a panel or hit refresh;<br>
-  Tiny Usage puts Claude, Codex, and OpenCode Go quotas in the menu bar — one glance is enough.<br>
-  <strong>Native macOS app · ~1 MB DMG</strong>
+  Tiny Usage puts Claude, Codex, and OpenCode Go quotas in the menu bar — one glance is enough.
 </p>
 
 <p align="center">
-  <em>Some numbers are reassuring to have in the menu bar.</em><br>
+  <em>Some numbers are reassuring to have in the menu bar.<br>
   CPU 40%, RAM 76%, temperature 56 °C.<br>
-  Hmm… and quota?
+  Hmm… and quota?</em>
 </p>
 
 <p align="center">

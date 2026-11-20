@@ -4,17 +4,19 @@
 
 <h1 align="center">Tiny Usage</h1>
 
+<p align="center"><sub>原生 macOS 应用 · Apple 芯片 · DMG 约 1 MB</sub></p>
+
+<h3 align="center">不想动手，抬眼即知。</h3>
+
 <p align="center">
-  <strong>不想动手，抬眼即知。</strong><br>
   市面上的余额工具，几乎都要点开面板或手动刷新一次；<br>
-  Tiny Usage 把 Claude、Codex 和 OpenCode Go 的额度放进菜单栏，一眼就能看到。<br>
-  <strong>原生 macOS 应用 · DMG 约 1 MB</strong>
+  Tiny Usage 把 Claude、Codex 和 OpenCode Go 的额度放进菜单栏，一眼就能看到。
 </p>
 
 <p align="center">
-  <em>有些数字，挂在菜单栏才安心。</em><br>
+  <em>有些数字，挂在菜单栏才安心。<br>
   CPU 40%、RAM 76%、温度 56 °C。<br>
-  嗯……那额度呢？
+  嗯……那额度呢？</em>
 </p>
 
 <p align="center">
