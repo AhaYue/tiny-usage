@@ -5,8 +5,9 @@
 <h1 align="center">Tiny Usage</h1>
 
 <p align="center">
-  <strong>不用点开面板。</strong><br>
-  Claude、Codex 和 OpenCode Go 的剩余额度并排显示在 Mac 菜单栏。<br>
+  <strong>不想动手，抬眼即知。</strong><br>
+  市面上的余额工具，几乎都要点开面板或手动刷新一次；<br>
+  Tiny Usage 把 Claude、Codex 和 OpenCode Go 的额度放进菜单栏，一眼就能看到。<br>
   <strong>原生 macOS 应用 · DMG 约 1 MB</strong>
 </p>
 
@@ -17,10 +18,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/menu-bar.png" alt="菜单栏上并排显示 Claude 和 Codex 的额度条与剩余百分比">
+  <img src="docs/panel.png" width="460" alt="Tiny Usage 详情面板显示 Claude 和 Codex 的剩余额度、重置倒计时和重置卡">
 </p>
-
-<p align="center"><strong>不想动手，抬眼即知。</strong></p>
 
 <p align="center">
   <a href="https://tiny-usage.ayue.dev">官网</a>
@@ -53,8 +52,6 @@ brew install --cask ahayue/tap/tiny-usage
 
 已登录的 Claude Code 和 Codex 可以直接使用。OpenCode Go 在 **设置 → OpenCode Go** 接入。
 
-
-
 ## 功能
 
 - **菜单栏**：额度可显示为进度条、百分比，或两者并排。
@@ -65,17 +62,11 @@ brew install --cask ahayue/tap/tiny-usage
 - **语言**：支持简体中文、English，也可跟随系统。
 - **更新**：自动检查，也可在设置中手动检查。
 
-<p align="center">
-  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage 详情面板显示 Claude 和 Codex 的剩余额度、重置倒计时和重置卡">
-</p>
-
 ## 后续维护
 
 Tiny Usage 就是图个省心。抬眼看看还剩多少额度、什么时候重置，就够了。维护范围也就到这儿，说到底就是个破工具。
 
 为了让 App 保持轻量，后续只维护 Claude、Codex 和 OpenCode Go 的额度显示，不接入其他服务或第三方 API 路由，也不提供 API 账户余额查询。
-
-
 
 ## 用量从哪里来
 

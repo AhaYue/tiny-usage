@@ -5,8 +5,9 @@
 <h1 align="center">Tiny Usage</h1>
 
 <p align="center">
-  <strong>No need to open the panel.</strong><br>
-  Your remaining quotas for Claude, Codex, and OpenCode Go sit side by side in your Mac menu bar.<br>
+  <strong>No need to lift a finger.</strong><br>
+  Most quota tools make you open a panel or hit refresh;<br>
+  Tiny Usage puts Claude, Codex, and OpenCode Go quotas in the menu bar — one glance is enough.<br>
   <strong>Native macOS app · ~1 MB DMG</strong>
 </p>
 
@@ -17,10 +18,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/menu-bar.png" alt="Claude and Codex quota bars and remaining percentages side by side in the menu bar">
+  <img src="docs/panel.png" width="460" alt="Tiny Usage details panel showing remaining Claude and Codex quotas, reset countdowns, and reset credits">
 </p>
-
-<p align="center"><strong>See what’s left at a glance.</strong></p>
 
 <p align="center">
   <a href="https://tiny-usage.ayue.dev/en">Website</a>
@@ -53,8 +52,6 @@ If macOS blocks the first launch, go to **System Settings → Privacy & Security
 
 Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **Settings → OpenCode Go**.
 
-
-
 ## Features
 
 - **Menu bar**: Show quota as bars, percentages, or both side by side.
@@ -65,17 +62,11 @@ Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **S
 - **Language**: Use English, Simplified Chinese, or your system language.
 - **Updates**: Automatic checks, with a manual check in Settings.
 
-<p align="center">
-  <img src="docs/tiny-usage-menu-bar-v2.png" width="460" alt="Tiny Usage details panel showing remaining Claude and Codex quotas, reset countdowns, and reset credits">
-</p>
-
 ## What’s next
 
 I built Tiny Usage for a little peace of mind. I can glance at the menu bar to see how much quota I have left and when it resets. That’s as far as I plan to take it. It’s just a scrappy little tool.
 
 To keep the app lightweight, I’ll continue to support quota tracking for Claude, Codex, and OpenCode Go only. I won’t add other providers, third-party API routers, or API account balance checks.
-
-
 
 ## How Tiny Usage reads your quota
 
