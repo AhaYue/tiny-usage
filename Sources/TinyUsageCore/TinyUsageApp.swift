@@ -38,6 +38,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var isSleeping = false
+    /// Inputs of the last menu-bar draw (see `renderKey`), so an identical redraw is skipped.
+    private var lastRenderKey: String?
     /// When the background tick last read local sources — paces it to `RefreshMode.localInterval`.
     private var lastAutoRefresh: Date?
     private var updater: AppUpdater?
@@ -64,6 +66,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         store.$services.receive(on: RunLoop.main).sink { [weak self] _ in self?.renderTitle() }.store(in: &subscribers)
         NSApp.publisher(for: \.effectiveAppearance).receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.renderTitle() }.store(in: &subscribers)
+        // The button's own appearance follows the menu bar, which can differ from the app's (a dark
+        // wallpaper in light mode). Setting the image re-evaluates it, so this fires in answer to our
+        // own draw — harmless only because `renderTitle` skips an identical image (see `renderKey`).
+        // Before that guard this loop kept the app at a full core for its whole run.
         item.button?.publisher(for: \.effectiveAppearance, options: [.new]).receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.renderTitle() }.store(in: &subscribers)
         renderTitle()
@@ -243,8 +249,16 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // Bound width on crowded menu bars; the tooltip still lists every selected account.
         let budget = max(100, (button.window?.screen?.auxiliaryTopRightArea?.width
             ?? button.window?.screen?.frame.width ?? 900) - 260)
-        let style = self.style, remaining = self.remaining, now = Date()
-        let colors = MenuBarColors.load()
+        let style = self.style, remaining = self.remaining, colors = MenuBarColors.load()
+        // The time cursor moves once a minute, so a render is only ever needed on a new minute or on
+        // changed inputs. Without this, an appearance notification arriving in answer to our own
+        // image assignment redrew the title again for as long as the app ran.
+        let now = Date()
+        let key = MenuBarRenderer.renderKey(services: services, style: style, remaining: remaining,
+                                            colors: colors, appearanceName: button.effectiveAppearance.name.rawValue,
+                                            minute: Int(now.timeIntervalSince1970 / 60), budget: budget)
+        guard key != lastRenderKey else { return }
+        lastRenderKey = key
         var image = MenuBarRenderer.image(services: services, style: style, remaining: remaining, now: now, colors: colors)
         while services.count > 1 && image.size.width > budget {
             services.removeLast()

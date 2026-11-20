@@ -13,6 +13,14 @@
 | 正常模式：面板已关闭，空闲 | 32.5 MiB | 34.4 MiB | **0.17%**（30 s） | `memory-idle.txt`、`performance-idle.json` |
 | 同一进程运行约 24 分钟后 | 33.7 MiB | 35.1 MiB | 累计 6.6 s CPU，约 0.47%（含前面的交互与取数） | 手动 `ps` / `vmmap` 读数 |
 
+## 1.1.2–1.2.0 的菜单栏重绘失控
+
+1.1.2 加入菜单栏配色后，App 在菜单栏上会持续占满一个 CPU 核心（本机 M4 实测空闲时约 97%），运行越久越热；1.2.0 同样受影响，1.3.0 修复。原因是同一次改动为"低调"配色引入的 `.labelColor` 让图标依赖外观，于是加了状态栏按钮的 `effectiveAppearance` 订阅：`renderTitle()` 给按钮换图会让按钮重新求值外观，发布者于是再次回调 `renderTitle()`，形成自激循环。逐项关闭订阅做对照后确认：只留这个订阅即复现，只留 `NSApp` 的那个则不复现。`sample` 采样显示一半以上的样本停在 `renderTitle()` 的 CoreText 文字测量上。
+
+修复是在 `renderTitle()` 里比较绘制输入的摘要（`MenuBarRenderer.renderKey`：各服务的百分比/重置时间/可用性、样式、显示口径、颜色、外观名、分钟、宽度预算），摘要未变就不重绘。时间游标每分钟移动一次，所以分钟计入了摘要。
+
+修复后同一构建空闲 60 秒累计 CPU 约 0.1 s（`ps` 读数 0.0%），RSS 稳定在约 77 MiB。回归测试见 `testRenderKeyChangesOnlyWhenTheImageWould`。
+
 上表测量于加入 Sparkle 之前的构建（当时包体积 9.4 MiB，无第三方动态库，应用名还是 AY Usage）。1.0.0 的包体积约 3.5 MiB（DMG 约 1 MB），内含 Sparkle.framework；内存和 CPU 尚未在该版本上重新采样。
 
 ## 怎么读这些数字

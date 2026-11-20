@@ -4,6 +4,16 @@ To release: add a `## [x.y.z]` section at the top with a `### English` and a `##
 
 发布新版本时，在最上面加一节 `## [x.y.z]`，分别写 `### English` 和 `### 中文` 两个列表，再推送 `vx.y.z` 标签。这一节会成为 GitHub Release 说明，应用内更新窗口按用户语言显示对应列表。
 
+## [1.3.0]
+
+### English
+
+- Fixed the app keeping a CPU core busy the whole time it ran, which made the Mac run hot. A menu-bar redraw was re-triggered by its own result, so the icon was redrawn continuously; it now redraws only when what it shows changes. Colors still follow the menu bar's own appearance.
+
+### 中文
+
+- 修复了 App 运行期间持续占满一个 CPU 核心、导致电脑发热的问题。菜单栏重绘会被自己的结果再次触发，图标因此不断重画；现在只在内容变化时重绘。配色仍会跟随菜单栏自身的外观变化。
+
 ## [1.2.0]
 
 ### English

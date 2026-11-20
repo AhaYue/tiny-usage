@@ -112,6 +112,25 @@ enum MenuBarRenderer {
         return out
     }
 
+    /// Everything the menu-bar image is drawn from, as one comparable string. `renderTitle` skips a
+    /// draw whose key equals the previous one: the status button's appearance publisher fires in
+    /// answer to our own image assignment, so without this guard the app redrew the title for as long
+    /// as it ran, at a full core. The minute is in the key because the time cursor moves once a minute.
+    static func renderKey(services: [ServiceStatus], style: Style, remaining: Bool,
+                          colors: MenuBarColors, appearanceName: String,
+                          minute: Int, budget: CGFloat) -> String {
+        let parts = services.map { service in
+            [service.name, service.iconName, String(describing: service.sessionRemainingPercent),
+             String(describing: service.weeklyRemainingPercent), String(describing: service.sessionResetAt),
+             String(describing: service.weeklyResetAt), String(describing: service.weeklyWindowSeconds),
+             service.isAvailable ? "1" : "0", service.isStale ? "1" : "0"].joined(separator: "|")
+        }
+        return [parts.joined(separator: "§"), String(style.rawValue), remaining ? "1" : "0",
+                String(colors.mode.rawValue), String(colors[.plenty]), String(colors[.low]),
+                String(colors[.critical]), appearanceName, String(minute),
+                String(Int(budget))].joined(separator: "§")
+    }
+
     static func tooltip(services: [ServiceStatus], remaining: Bool) -> String {
         return services.sortedByDisplayOrder().map { service in
             let five = displayedPercent(remaining: service.sessionRemainingPercent, showRemaining: remaining).map { "\($0)%" } ?? L("unknown")

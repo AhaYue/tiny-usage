@@ -85,6 +85,42 @@ final class MenuBarRendererTests: XCTestCase {
         XCTAssertTrue(MenuBarRenderer.tooltip(services: [status], remaining: true).contains(L("unknown")))
     }
 
+    /// The appearance publisher on the status button fires in answer to our own image assignment.
+    /// If an identical render keeps a different key, `renderTitle` redraws forever — the regression
+    /// that pinned the app at a full core. Every input it draws from must be able to change the key.
+    func testRenderKeyChangesOnlyWhenTheImageWould() {
+        func status(_ session: Int?, reset: Date? = nil, stale: Bool = false) -> ServiceStatus {
+            ServiceStatus(name: "Claude", iconName: "claude", sessionResetAt: reset, weeklyResetAt: nil,
+                          sessionRemainingPercent: session, weeklyRemainingPercent: 50,
+                          models: [], isAvailable: true, statusNote: nil, isStale: stale)
+        }
+        func key(_ services: [ServiceStatus], style: MenuBarRenderer.Style = .bars, remaining: Bool = true,
+                 colors: MenuBarColors = MenuBarColors(), appearance: String = "NSAppearanceNameDarkAqua",
+                 minute: Int = 100, budget: CGFloat = 900) -> String {
+            MenuBarRenderer.renderKey(services: services, style: style, remaining: remaining, colors: colors,
+                                      appearanceName: appearance, minute: minute, budget: budget)
+        }
+        let reset = Date(timeIntervalSince1970: 1_800_000_000)
+        let base = key([status(80, reset: reset)])
+
+        XCTAssertEqual(base, key([status(80, reset: reset)]), "an identical draw must not re-render")
+        XCTAssertNotEqual(base, key([status(79, reset: reset)]))
+        XCTAssertNotEqual(base, key([status(80, reset: reset.addingTimeInterval(60))]))
+        XCTAssertNotEqual(base, key([status(80, reset: reset, stale: true)]))
+        XCTAssertNotEqual(base, key([status(80, reset: reset), status(nil)]))
+        XCTAssertNotEqual(base, key([status(80, reset: reset)], style: .both))
+        XCTAssertNotEqual(base, key([status(80, reset: reset)], remaining: false))
+        XCTAssertNotEqual(base, key([status(80, reset: reset)], appearance: "NSAppearanceNameAqua"))
+        XCTAssertNotEqual(base, key([status(80, reset: reset)], minute: 101), "the time cursor moves each minute")
+        XCTAssertNotEqual(base, key([status(80, reset: reset)], budget: 400), "a narrower budget drops a service")
+
+        var colors = MenuBarColors()
+        colors.mode = .custom
+        colors[.critical] = 0xFF0000
+        XCTAssertNotEqual(MenuBarColors().mode.rawValue, colors.mode.rawValue)
+        XCTAssertNotEqual(key([status(80, reset: reset)]), key([status(80, reset: reset)], colors: colors))
+    }
+
     func testQuotaLevelReadsLikeABatteryByRemainingOnly() {
         XCTAssertEqual(QuotaLevel(remaining: 100), .plenty)
         XCTAssertEqual(QuotaLevel(remaining: 50), .plenty)
