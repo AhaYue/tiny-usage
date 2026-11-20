@@ -6,6 +6,24 @@
     <description>Tiny Usage update feed</description>
     <language>en</language>
     <item>
+      <title>Tiny Usage 1.3.0</title>
+      <sparkle:version>1003000</sparkle:version>
+      <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 20 Nov 2026 01:48:53 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<ul>
+<li>Fixed the app keeping a CPU core busy the whole time it ran, which made the Mac run hot. A menu-bar redraw was re-triggered by its own result, so the icon was redrawn continuously; it now redraws only when what it shows changes. Colors still follow the menu bar&#x27;s own appearance.</li>
+</ul>
+      ]]></description>
+      <description xml:lang="zh-Hans"><![CDATA[
+<ul>
+<li>修复了 App 运行期间持续占满一个 CPU 核心、导致电脑发热的问题。菜单栏重绘会被自己的结果再次触发，图标因此不断重画；现在只在内容变化时重绘。配色仍会跟随菜单栏自身的外观变化。</li>
+</ul>
+      ]]></description>
+      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.3.0/TinyUsage-1.3.0.zip" sparkle:edSignature="pybAQDhLStOKTkMczAxJWOImmK9CjzC48bdcWs36XTZ4u0vY5qYKfD7Gb3oGXraReOU9iL3JyJ8EPIsLHh9RDQ==" length="1576051" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Tiny Usage 1.2.0</title>
       <sparkle:version>1002000</sparkle:version>
       <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
