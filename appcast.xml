@@ -24,62 +24,6 @@
       <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.3.0/TinyUsage-1.3.0.zip" sparkle:edSignature="pybAQDhLStOKTkMczAxJWOImmK9CjzC48bdcWs36XTZ4u0vY5qYKfD7Gb3oGXraReOU9iL3JyJ8EPIsLHh9RDQ==" length="1576051" type="application/octet-stream"/>
     </item>
     <item>
-      <title>Tiny Usage 1.2.0</title>
-      <sparkle:version>1002000</sparkle:version>
-      <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <pubDate>Wed, 18 Nov 2026 01:22:44 +0000</pubDate>
-      <description xml:lang="en"><![CDATA[
-<ul>
-<li>The menu bar icon no longer shows a hover tooltip that follows the cursor. Account details remain available to VoiceOver.</li>
-</ul>
-      ]]></description>
-      <description xml:lang="zh-Hans"><![CDATA[
-<ul>
-<li>菜单栏图标不再显示跟随鼠标的悬停提示框，账号详情仍可由 VoiceOver 朗读。</li>
-</ul>
-      ]]></description>
-      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.2.0/TinyUsage-1.2.0.zip" sparkle:edSignature="NhGsaTYl391jseW/GXWDJ1r0EZQNLb1gwS43scrpWKbJp7f1kcuZ47mQnxNkWjMHuZlm8r/Qm1uPsIUGqaNNBw==" length="1574653" type="application/octet-stream"/>
-    </item>
-    <item>
-      <title>Tiny Usage 1.1.3</title>
-      <sparkle:version>1001003</sparkle:version>
-      <sparkle:shortVersionString>1.1.3</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <pubDate>Mon, 16 Nov 2026 04:24:23 +0000</pubDate>
-      <description xml:lang="en"><![CDATA[
-<ul>
-<li>Settings puts menu bar controls first and groups refresh options together.</li>
-<li>Service checkboxes line up on the right under Show in menu bar.</li>
-</ul>
-      ]]></description>
-      <description xml:lang="zh-Hans"><![CDATA[
-<ul>
-<li>设置优先显示菜单栏选项，刷新频率与手动刷新放在一起。</li>
-<li>「在菜单栏显示」的服务复选框在右侧竖排对齐。</li>
-</ul>
-      ]]></description>
-      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.1.3/TinyUsage-1.1.3.zip" sparkle:edSignature="cWke0deM4FM+KsdiNA2M+1wc7VA6SEevOs5zIPz19nyPRNzOpF+6Z0aHh8qViNE0WB5OqHDgLli8SCSNGYASBw==" length="1574760" type="application/octet-stream"/>
-    </item>
-    <item>
-      <title>Tiny Usage 1.1.2</title>
-      <sparkle:version>1001002</sparkle:version>
-      <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <pubDate>Mon, 16 Nov 2026 04:00:40 +0000</pubDate>
-      <description xml:lang="en"><![CDATA[
-<ul>
-<li>Choose default, subtle, or custom menu bar colors. Subtle mode matches the menu bar icons when at least 50% remains. In custom mode, edit each quota color with a hex value or RGB sliders.</li>
-</ul>
-      ]]></description>
-      <description xml:lang="zh-Hans"><![CDATA[
-<ul>
-<li>菜单栏可选默认色彩、低调或自定义颜色。低调模式下，剩余配额达到 50% 时跟随菜单栏图标颜色。自定义模式可用十六进制色值或 RGB 滑块分别调整三档配额颜色。</li>
-</ul>
-      ]]></description>
-      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.1.2/TinyUsage-1.1.2.zip" sparkle:edSignature="oJXsnOXW+OFhQwi+gaucEL/0Ar4gq+QeaQFatUqhwKypmalQzE4S1+zNDJ4m/F2KFY8uLjjQiYMp9LPkpt+NBQ==" length="1573665" type="application/octet-stream"/>
-    </item>
-    <item>
       <title>Tiny Usage 1.1.1</title>
       <sparkle:version>1001001</sparkle:version>
       <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
