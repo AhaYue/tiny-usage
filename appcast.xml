@@ -6,6 +6,28 @@
     <description>Tiny Usage update feed</description>
     <language>en</language>
     <item>
+      <title>Tiny Usage 1.4.0</title>
+      <sparkle:version>1004000</sparkle:version>
+      <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <pubDate>Fri, 27 Nov 2026 05:15:03 +0000</pubDate>
+      <description xml:lang="en"><![CDATA[
+<ul>
+<li>Added Antigravity quota tracking (5-hour and weekly limits for both Gemini and Claude + GPT), with zero credential reads or Keychain prompts.</li>
+<li>Reads the running Antigravity app&#x27;s local `language_server` RPC first, and falls back to `agy -p /usage --output-format json` in an isolated temporary directory when the app is closed (with auto-updates disabled and browser launchers blocked).</li>
+<li>Automatically enables Antigravity on first launch if Antigravity.app or `agy` is installed, and stays hidden otherwise; toggle it anytime in Settings or Show in menu bar.</li>
+</ul>
+      ]]></description>
+      <description xml:lang="zh-Hans"><![CDATA[
+<ul>
+<li>新增 Antigravity 配额支持（同时展示 Gemini 与 Claude + GPT 的 5 小时和每周额度），零凭证读取、零钥匙串弹窗。</li>
+<li>优先通过运行中 Antigravity 桌面应用的本机 `language_server` RPC 获取配额；应用关闭时回退到隔离临时目录执行 `agy -p /usage --output-format json`（禁用自动更新并拦截浏览器弹窗）。</li>
+<li>首次启动检测到已安装 Antigravity.app 或 `agy` 时自动启用，未安装则默认隐藏；可在设置及「在菜单栏显示」中随时开关。</li>
+</ul>
+      ]]></description>
+      <enclosure url="https://github.com/AhaYue/tiny-usage/releases/download/v1.4.0/TinyUsage-1.4.0.zip" sparkle:edSignature="PmlePFQ3xgLY2Cov5OaMUw/h9oYFsPtm7Y4vF6lfybVbzaI6SAzRmE8hZtR4dvTqhUUfKVz60fpd0lsOfCdfAw==" length="1639848" type="application/octet-stream"/>
+    </item>
+    <item>
       <title>Tiny Usage 1.3.0</title>
       <sparkle:version>1003000</sparkle:version>
       <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
