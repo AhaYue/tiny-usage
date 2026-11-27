@@ -173,3 +173,10 @@
 "OpenCode Go usage is temporarily unavailable" = "OpenCode Go usage is temporarily unavailable";
 "Couldn't save the OpenCode Go key" = "Couldn't save the OpenCode Go key";
 "Couldn't remove the OpenCode Go key" = "Couldn't remove the OpenCode Go key";
+
+/* Antigravity */
+"Reads local app or agy CLI quota." = "Reads local app or agy CLI quota.";
+"Antigravity app" = "Antigravity app";
+"Antigravity CLI" = "Antigravity CLI";
+"Install Antigravity or agy CLI to read quota." = "Install Antigravity or agy CLI to read quota.";
+"Open Antigravity or sign in with agy in Terminal." = "Open Antigravity or sign in with agy in Terminal.";

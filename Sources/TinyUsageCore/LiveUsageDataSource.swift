@@ -13,6 +13,7 @@ final class UsageStore: ObservableObject {
     private var pendingRefresh = false
     private var pendingAuthorization = false
     private var openCodeConfigurationRevision = 0
+    private var antigravityConfigurationRevision = 0
 
     init(services: [ServiceStatus]? = nil) {
         self.services = services ?? source.initialStatuses()
@@ -22,6 +23,14 @@ final class UsageStore: ObservableObject {
         openCodeConfigurationRevision += 1
         schedule.remove(OpenCodeGoConfiguration.name)
         services.removeAll { $0.name == OpenCodeGoConfiguration.name }
+        refresh(force: true)
+    }
+
+    func antigravityConfigurationChanged() {
+        antigravityConfigurationRevision += 1
+        schedule.remove(AntigravityConfiguration.name)
+        services.removeAll { $0.name == AntigravityConfiguration.name }
+        Task { await AntigravityCLIUsage.shared.invalidateCache() }
         refresh(force: true)
     }
 
@@ -55,10 +64,13 @@ final class UsageStore: ObservableObject {
         }
         let skip = schedule.skipped(now: now, manual: force || userInitiated)
         let openCodeRevision = openCodeConfigurationRevision
+        let antigravityRevision = antigravityConfigurationRevision
+        let antigravity = AntigravityConfiguration.name
+        let manualRefresh = force || userInitiated
         let source = self.source
         Task {
             let result = await Task.detached(priority: .userInitiated) {
-                await source.fetchAll(skip: skip, userInitiated: userInitiated)
+                await source.fetchAll(skip: skip, userInitiated: userInitiated, force: manualRefresh)
             }.value
             defer {
                 self.isRefreshing = false
@@ -71,8 +83,14 @@ final class UsageStore: ObservableObject {
             }
             let currentOpenCodeID = OpenCodeGoConfiguration.currentSourceID()
             let current = result.filter {
-                $0.name != openCode || (openCodeConfigurationRevision == openCodeRevision &&
-                                        currentOpenCodeID != nil && $0.sourceID == currentOpenCodeID)
+                if $0.name == openCode {
+                    return openCodeConfigurationRevision == openCodeRevision &&
+                        currentOpenCodeID != nil && $0.sourceID == currentOpenCodeID
+                }
+                if $0.name == antigravity {
+                    return antigravityConfigurationRevision == antigravityRevision && AntigravityConfiguration.isEnabled
+                }
+                return true
             }
             let mode = RefreshMode.current
             for status in current where !skip.contains(status.name) { self.schedule.record(status, now: Date(), mode: mode) }
@@ -107,7 +125,7 @@ struct LiveUsageDataSource {
     func initialStatuses() -> [ServiceStatus] {
         let claudeAccount = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
         return [claudePrimarySnapshot(account: claudeAccount), codexSnapshotOrFallback()]
-            + [openCodeGoCachedStatus()].compactMap { $0 }
+            + [antigravityCachedStatus(), openCodeGoCachedStatus()].compactMap { $0 }
     }
 
     static func fallbackServices() -> [ServiceStatus] {
@@ -136,7 +154,7 @@ struct LiveUsageDataSource {
     /// Fetch every service. Services named in `skip` are in a fetch cooldown (e.g. after a 429)
     /// and are served from their snapshot instead of hitting the network. A live fetch that times
     /// out also falls back to the snapshot, so a transient failure never empties a card.
-    func fetchAll(skip: Set<String> = [], userInitiated: Bool = false) async -> [ServiceStatus] {
+    func fetchAll(skip: Set<String> = [], userInitiated: Bool = false, force: Bool = false) async -> [ServiceStatus] {
         // A second config dir signed in to a login another card already reads is the same account:
         // one card, not two. Read from local profiles only, so this costs no request.
         let claudeMain = Self.claudeAccount(configFile: ClaudeStatusLineHook.claudeConfigFile)
@@ -186,6 +204,17 @@ struct LiveUsageDataSource {
                     if skip.contains(extra.name) { return [self.codexLocalOrSnapshot(name: extra.name, home: extra.dir)] }
                     return [await withTimeout(seconds: 8) { await fetchCodex(name: extra.name, home: extra.dir) }
                         ?? self.codexSnapshotOrFallback(name: extra.name, home: extra.dir)]
+                }
+            }
+            if AntigravityConfiguration.isEnabled {
+                group.addTask {
+                    if skip.contains(AntigravityConfiguration.name) {
+                        return [self.antigravityCachedStatus()].compactMap { $0 }
+                    }
+                    if let result = await withTimeout(seconds: 28, operation: { await fetchAntigravity(force: force) }) {
+                        return [result].compactMap { $0 }
+                    }
+                    return [self.antigravityCachedStatus()].compactMap { $0 }
                 }
             }
             if OpenCodeGoConfiguration.mode != .disabled {

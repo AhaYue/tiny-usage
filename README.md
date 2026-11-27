@@ -10,7 +10,7 @@
 
 <p align="center">
   市面上的余额工具，几乎都要点开面板或手动刷新一次；<br>
-  Tiny Usage 把 Claude、Codex 和 OpenCode Go 的额度放进菜单栏，一眼就能看到。
+  Tiny Usage 把 Claude、Codex、Antigravity 和 OpenCode Go 的额度放进菜单栏，一眼就能看到。
 </p>
 
 <p align="center">
@@ -52,7 +52,7 @@ brew install --cask ahayue/tap/tiny-usage
 
 如果 macOS 拦截首次启动，前往 **系统设置 → 隐私与安全性 → 仍要打开**。
 
-已登录的 Claude Code 和 Codex 可以直接使用。OpenCode Go 在 **设置 → OpenCode Go** 接入。
+已登录的 Claude Code、Codex 和已安装的 Antigravity 可以直接使用（未安装时 Antigravity 默认隐藏，可在 **设置 → Antigravity** 手动开启）。OpenCode Go 在 **设置 → OpenCode Go** 接入。
 
 ## 功能
 
@@ -68,7 +68,7 @@ brew install --cask ahayue/tap/tiny-usage
 
 Tiny Usage 就是图个省心。抬眼看看还剩多少额度、什么时候重置，就够了。维护范围也就到这儿，说到底就是个破工具。
 
-为了让 App 保持轻量，后续只维护 Claude、Codex 和 OpenCode Go 的额度显示，不接入其他服务或第三方 API 路由，也不提供 API 账户余额查询。
+为了让 App 保持轻量，后续只维护 Claude、Codex、Antigravity 和 OpenCode Go 的额度显示，不接入其他服务或第三方 API 路由，也不提供 API 账户余额查询。
 
 ## 用量从哪里来
 
@@ -80,6 +80,7 @@ Tiny Usage 就是图个省心。抬眼看看还剩多少额度、什么时候重
 - **Claude Code**：首次启动会自动接入并保留原有的 `statusLine`，备份配置，只采集额度百分比和重置时间。缺少新数据时，会尝试用已登录的 CLI 执行 `/usage`。在 **设置 → 关于 → Claude 状态栏 → 移除接入**可恢复原状，之后不会自动重新接入。
 - **Claude 明细（可选）**：在 Claude 卡片授权使用 Claude Code 或 Claude 桌面应用的登录，可获取模型配额和重置卡。确认后才请求钥匙串权限，凭据只读。
 - **Codex**：使用已有的 CLI 登录查询配额，并读取同一 Codex 目录的本地会话记录，支持自定义 `CODEX_HOME`。
+- **Antigravity**：零凭证读取。运行 Antigravity 桌面应用时通过本机 `language_server` RPC 获取配额；应用关闭时在隔离临时目录执行 `agy -p /usage --output-format json`（禁用自动更新并拦截浏览器弹窗），同时展示 Gemini 与 Claude + GPT 两组 5 小时和每周额度。首次启动检测到已安装即开启，可在 **设置 → Antigravity** 随时开关。
 - **OpenCode Go**：复用 `opencode-go` 的 API key，或填写套餐所在工作区的个人 key。手动填写的 key 存在钥匙串。支持 5 小时、每周和月度额度；点 **打开账单** 可查看工作区充值余额。
 
 </details>

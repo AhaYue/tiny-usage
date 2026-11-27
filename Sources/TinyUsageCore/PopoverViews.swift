@@ -107,6 +107,7 @@ struct PopoverView: View {
     private static func supported(_ service: ServiceStatus) -> Bool {
         service.name == "Claude" || service.name.hasPrefix("Claude ") ||
         service.name == "Codex" || service.name.hasPrefix("Codex ") ||
+        service.name == AntigravityConfiguration.name ||
         service.name == OpenCodeGoConfiguration.name
     }
 
@@ -240,6 +241,8 @@ struct PopoverSettings {
     var authorize: () -> Void
     var didAuthorize: () -> Bool
     var refresh: () -> Void
+    var antigravityEnabled: () -> Bool = { false }
+    var setAntigravityEnabled: (Bool) -> Void = { _ in }
     var configureOpenCodeGo: () -> Void = {}
     var openDataFolder: () -> Void
     var about: () -> Void
@@ -281,6 +284,7 @@ struct SettingsFace: View {
         var menuBarColors = MenuBarColors()
         var menuBarProviders = MenuBarProvider.all
         var refreshMode = 0
+        var antigravityEnabled = false
     }
 
     private func reload() {
@@ -289,7 +293,8 @@ struct SettingsFace: View {
                       menuStyle: settings.menuStyle(),
                       menuBarColors: settings.menuBarColors(),
                       menuBarProviders: settings.menuBarProviders(),
-                      refreshMode: settings.refreshMode())
+                      refreshMode: settings.refreshMode(),
+                      antigravityEnabled: settings.antigravityEnabled())
     }
 
     var body: some View {
@@ -312,6 +317,9 @@ struct SettingsFace: View {
                           options: RefreshMode.allCases.map { ($0.rawValue, $0.label) })
                 row("arrow.clockwise", L("Refresh usage"), nil, action: settings.refresh)
                 row("key", L("Authorize reset credits"), L("Queries Claude reset credits and the full quota."), action: settings.authorize)
+                switchRow(AntigravityConfiguration.iconName, AntigravityConfiguration.name,
+                          L("Reads local app or agy CLI quota."), brandIcon: true,
+                          isOn: flags.antigravityEnabled) { settings.setAntigravityEnabled($0) }
                 row(OpenCodeGoConfiguration.iconName, OpenCodeGoConfiguration.name, L("Manage the key for Go quotas."), brandIcon: true,
                     action: settings.configureOpenCodeGo)
 
@@ -468,12 +476,18 @@ struct SettingsFace: View {
 
     /// An on/off setting: same layout as the picker rows, a system switch on the right.
     private func switchRow(_ symbol: String, _ title: String, _ subtitle: String?,
-                           isOn: Bool, set: @escaping (Bool) -> Void) -> some View {
+                           brandIcon: Bool = false, isOn: Bool, set: @escaping (Bool) -> Void) -> some View {
         HStack(spacing: 11) {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .light))
-                .foregroundStyle(Color.primary.opacity(0.6))
-                .frame(width: 22, height: 22)
+            Group {
+                if brandIcon {
+                    BrandIconView(iconName: symbol, size: 15)
+                } else {
+                    Image(systemName: symbol)
+                        .font(.system(size: 15, weight: .light))
+                }
+            }
+            .foregroundStyle(Color.primary.opacity(0.6))
+            .frame(width: 22, height: 22)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.system(size: 13, weight: .regular))
@@ -775,8 +789,9 @@ struct ServiceCard: View {
         VStack(alignment: .leading, spacing: 8) {
             if !providerPanels.isEmpty {
                 VStack(alignment: .leading, spacing: 7) {
-                    ForEach(Array(providerPanels.enumerated()), id: \.offset) { _, panel in
+                    ForEach(Array(providerPanels.enumerated()), id: \.offset) { index, panel in
                         ProviderPanel(panel: panel.promotingLoneWindow(), now: now)
+                            .padding(.top, index > 0 ? 8 : 0)
                     }
                     ForEach(Array(modelLimitRows.enumerated()), id: \.offset) { _, row in
                         modelLimitPill(row)
@@ -961,9 +976,12 @@ struct ServiceCard: View {
                           sessionFallback: 5 * 3600,
                           weeklyWindow: service.weeklyWindowSeconds ?? 7 * 86_400,
                           gated: service.weeklyRemainingPercent == 0 && service.sessionRemainingPercent != nil)]
-            // A quota beside the plan's own (Codex's Luna Reserve) is a quota in its own right, so it
-            // gets its own panel under its own name.
-            + families(in: service.models.filter { $0.groupLabel == LiveUsageDataSource.codexExtraLimitGroup })
+            // A quota beside the plan's own (Codex's Luna Reserve, Antigravity's Claude + GPT) is a
+            // quota in its own right, so it gets its own panel under its own name.
+            + families(in: service.models.filter {
+                $0.groupLabel == LiveUsageDataSource.codexExtraLimitGroup
+                    || $0.groupLabel == AntigravityConfiguration.extraLimitGroup
+            })
                 .map { family in
                     PanelData(title: family.name, iconName: service.iconName,
                               session: family.session.map { ($0.percent, $0.resetAt) },
@@ -1345,6 +1363,14 @@ struct SetupCard: View {
             }
             if let recovery {
                 recovery
+            } else if service.name == AntigravityConfiguration.name {
+                Text(AppLanguage.current.text(forKey: service.statusNote ?? AntigravityUsage.signInHintNote))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(refreshing ? L("Reading…") : L("Refresh"), action: settings.refresh)
+                    .controlSize(.small)
+                    .disabled(refreshing)
             } else if service.name == OpenCodeGoConfiguration.name {
                 Text(AppLanguage.current.text(forKey: service.statusNote ?? "OpenCode Go usage is temporarily unavailable"))
                     .font(.system(size: 11))

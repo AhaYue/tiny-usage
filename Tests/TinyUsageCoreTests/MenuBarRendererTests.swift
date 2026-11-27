@@ -38,10 +38,10 @@ final class MenuBarRendererTests: XCTestCase {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
 
-        XCTAssertEqual(MenuBarProvider.selection(in: defaults), [.claude, .codex, .openCodeGo])
-        MenuBarProvider.save([.codex, .openCodeGo], in: defaults)
+        XCTAssertEqual(MenuBarProvider.selection(in: defaults), [.claude, .codex, .antigravity, .openCodeGo])
+        MenuBarProvider.save([.codex, .antigravity, .openCodeGo], in: defaults)
         let reloaded = try XCTUnwrap(UserDefaults(suiteName: suite))
-        XCTAssertEqual(MenuBarProvider.selection(in: reloaded), [.codex, .openCodeGo])
+        XCTAssertEqual(MenuBarProvider.selection(in: reloaded), [.codex, .antigravity, .openCodeGo])
         MenuBarProvider.save([], in: defaults)
         XCTAssertTrue(MenuBarProvider.selection(in: reloaded).isEmpty)
     }

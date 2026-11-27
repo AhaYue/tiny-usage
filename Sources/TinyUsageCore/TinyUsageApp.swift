@@ -359,6 +359,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             authorize: { [weak self] in self?.authorize() },
             didAuthorize: { UserDefaults.standard.bool(forKey: Self.didAuthorizeKey) },
             refresh: { [weak self] in if self?.demo == false { self?.store.refresh(force: true) } },
+            antigravityEnabled: { AntigravityConfiguration.isEnabled },
+            setAntigravityEnabled: { [weak self] on in
+                guard let self, !self.demo else { return }
+                AntigravityConfiguration.setEnabled(on)
+                self.store.antigravityConfigurationChanged()
+            },
             configureOpenCodeGo: { [weak self] in self?.configureOpenCodeGo() },
             openDataFolder: {
                 try? FileManager.default.createDirectory(at: LiveUsageDataSource.supportDirectory, withIntermediateDirectories: true)

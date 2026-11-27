@@ -10,7 +10,7 @@
 
 <p align="center">
   Most quota tools make you open a panel or hit refresh;<br>
-  Tiny Usage puts Claude, Codex, and OpenCode Go quotas in the menu bar — one glance is enough.
+  Tiny Usage puts Claude, Codex, Antigravity, and OpenCode Go quotas in the menu bar — one glance is enough.
 </p>
 
 <p align="center">
@@ -52,7 +52,7 @@ Or [download the DMG](https://github.com/AhaYue/tiny-usage/releases/latest/downl
 
 If macOS blocks the first launch, go to **System Settings → Privacy & Security → Open Anyway**.
 
-Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **Settings → OpenCode Go**.
+Use your existing Claude Code and Codex logins. Antigravity turns on automatically if installed (otherwise hidden by default and toggleable in **Settings → Antigravity**). To connect OpenCode Go, open **Settings → OpenCode Go**.
 
 ## Features
 
@@ -68,7 +68,7 @@ Use your existing Claude Code and Codex logins. To connect OpenCode Go, open **S
 
 I built Tiny Usage for a little peace of mind. I can glance at the menu bar to see how much quota I have left and when it resets. That’s as far as I plan to take it. It’s just a scrappy little tool.
 
-To keep the app lightweight, I’ll continue to support quota tracking for Claude, Codex, and OpenCode Go only. I won’t add other providers, third-party API routers, or API account balance checks.
+To keep the app lightweight, I’ll continue to support quota tracking for Claude, Codex, Antigravity, and OpenCode Go only. I won’t add other providers, third-party API routers, or API account balance checks.
 
 ## How Tiny Usage reads your quota
 
@@ -80,6 +80,7 @@ No sign-up required. Your Mac queries providers directly. Tiny Usage has no back
 - **Claude Code**: On first launch, Tiny Usage backs up your settings and connects to your existing `statusLine`. It keeps the original command running and saves only quota percentages and reset times. If data is stale, it can run `/usage` with your CLI login. Use **Settings → About → Claude status line → Disconnect** to restore the original status line and turn off automatic reconnection.
 - **Claude details (optional)**: Authorize your Claude Code or Claude Desktop login from the Claude card to see model limits and reset credits. Tiny Usage requests Keychain access after you confirm and only reads the credentials.
 - **Codex**: Uses your CLI login to query quota and reads session history from the same Codex directory, including a custom `CODEX_HOME`.
+- **Antigravity**: Zero-credential tracking. Queries the running Antigravity app’s local `language_server` RPC first, and falls back to `agy -p /usage --output-format json` in an isolated temp directory (with auto-update disabled and browser launchers blocked) when closed. Displays both Gemini and Claude + GPT 5-hour/weekly quotas. Auto-enabled on first launch when installed, and toggleable anytime in **Settings → Antigravity**.
 - **OpenCode Go**: Reuse the `opencode-go` API key or enter a personal key for the subscription’s workspace. Manually entered keys are stored in Keychain. See 5-hour, weekly, and monthly limits, or click **Open billing** for the workspace credit balance.
 
 </details>

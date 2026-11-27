@@ -221,7 +221,7 @@ enum ModelWindow {
 /// The single top→bottom display order for the services, read by BOTH the popover cards
 /// (`PopoverView.contentView`) and the menu bar. Keeping it in one place is load-bearing: when
 /// the two defined the order independently they drifted, and a dot lined up with the wrong card.
-let serviceDisplayOrder = ["Claude", "Codex", OpenCodeGoConfiguration.name]
+let serviceDisplayOrder = ["Claude", "Codex", AntigravityConfiguration.name, OpenCodeGoConfiguration.name]
 
 extension Array where Element == ServiceStatus {
     /// Sorted into the canonical display order (Claude, Codex); unknown names last.

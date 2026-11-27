@@ -56,11 +56,36 @@ enum PreviewFixtures {
             menuBarProviders: { menuBarProviders }, setMenuBarProviders: { _ in },
             refreshMode: { 0 }, setRefreshMode: { _ in },
             authorize: {}, didAuthorize: { didAuthorize }, refresh: {},
+            antigravityEnabled: { true }, setAntigravityEnabled: { _ in },
             openDataFolder: {}, about: {}, quit: {})
     }
 
     static func store(_ services: [ServiceStatus] = DemoData.services()) -> UsageStore {
         UsageStore(services: services)
+    }
+
+    static func antigravity(now: Date = Date(), cached: Bool = false) -> ServiceStatus {
+        ServiceStatus(
+            name: AntigravityConfiguration.name,
+            iconName: AntigravityConfiguration.iconName,
+            sessionResetAt: now.addingTimeInterval(3 * 3600 + 58 * 60),
+            weeklyResetAt: now.addingTimeInterval(6 * 86_400 + 22 * 3600),
+            sessionRemainingPercent: 88,
+            weeklyRemainingPercent: 97,
+            weeklyWindowSeconds: 7 * 86_400,
+            models: [
+                ModelStatus(name: "Claude + GPT", remainingPercent: 100,
+                            resetAt: now.addingTimeInterval(4 * 3600 + 6 * 60),
+                            window: .session, groupLabel: AntigravityConfiguration.extraLimitGroup),
+                ModelStatus(name: "Claude + GPT", remainingPercent: 100,
+                            resetAt: now.addingTimeInterval(6 * 86_400 + 23 * 3600),
+                            window: .weekly, groupLabel: AntigravityConfiguration.extraLimitGroup),
+            ],
+            isAvailable: true,
+            statusNote: cached ? "snapshot" : AntigravityUsage.cliSourceNote,
+            isStale: cached,
+            observedAt: cached ? now.addingTimeInterval(-3600) : now
+        )
     }
 
     static func openCodeGo(now: Date = Date(), cached: Bool = false) -> ServiceStatus {
@@ -166,11 +191,20 @@ enum PreviewRenderer {
             }
         }
         if wanted("menu-bar") {
-            let services = store.services + [PreviewFixtures.openCodeGo(now: now)]
+            let services = store.services + [PreviewFixtures.antigravity(now: now), PreviewFixtures.openCodeGo(now: now)]
             let image = MenuBarRenderer.image(services: services, style: .both, remaining: true, now: now)
             if let tiff = image.tiffRepresentation,
                let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
                 try? png.write(to: directory.appendingPathComponent("menu-bar.png"))
+            }
+        }
+        for cached in [false, true] {
+            let name = cached ? "antigravity-cached" : "antigravity-panel"
+            guard wanted(name) else { continue }
+            let store = PreviewFixtures.store(DemoData.services(now: now) + [PreviewFixtures.antigravity(now: now, cached: cached)])
+            for dark in [true, false] {
+                snapshot(PreviewFixtures.panel(store), dark: dark,
+                         to: directory.appendingPathComponent("\(name)-\(dark ? "dark" : "light").png"))
             }
         }
         for cached in [false, true] {

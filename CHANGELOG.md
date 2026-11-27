@@ -4,6 +4,20 @@ To release: add a `## [x.y.z]` section at the top with a `### English` and a `##
 
 发布新版本时，在最上面加一节 `## [x.y.z]`，分别写 `### English` 和 `### 中文` 两个列表，再推送 `vx.y.z` 标签。这一节会成为 GitHub Release 说明，应用内更新窗口按用户语言显示对应列表。
 
+## [1.4.0]
+
+### English
+
+- Added Antigravity quota tracking (5-hour and weekly limits for both Gemini and Claude + GPT), with zero credential reads or Keychain prompts.
+- Reads the running Antigravity app's local `language_server` RPC first, and falls back to `agy -p /usage --output-format json` in an isolated temporary directory when the app is closed (with auto-updates disabled and browser launchers blocked).
+- Automatically enables Antigravity on first launch if Antigravity.app or `agy` is installed, and stays hidden otherwise; toggle it anytime in Settings or Show in menu bar.
+
+### 中文
+
+- 新增 Antigravity 配额支持（同时展示 Gemini 与 Claude + GPT 的 5 小时和每周额度），零凭证读取、零钥匙串弹窗。
+- 优先通过运行中 Antigravity 桌面应用的本机 `language_server` RPC 获取配额；应用关闭时回退到隔离临时目录执行 `agy -p /usage --output-format json`（禁用自动更新并拦截浏览器弹窗）。
+- 首次启动检测到已安装 Antigravity.app 或 `agy` 时自动启用，未安装则默认隐藏；可在设置及「在菜单栏显示」中随时开关。
+
 ## [1.3.0]
 
 ### English

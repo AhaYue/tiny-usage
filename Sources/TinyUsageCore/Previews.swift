@@ -28,6 +28,12 @@ import SwiftUI
 #Preview("面板 · 缓存用量") {
     PreviewFixtures.panel(PreviewFixtures.store([PreviewFixtures.savedClaude()]), capture: .waiting)
 }
+#Preview("面板 · Antigravity") {
+    PreviewFixtures.panel(PreviewFixtures.store(DemoData.services() + [PreviewFixtures.antigravity()]))
+}
+#Preview("Antigravity · 缓存用量") {
+    PreviewFixtures.panel(PreviewFixtures.store([PreviewFixtures.antigravity(cached: true)]))
+}
 #Preview("面板 · OpenCode Go") {
     PreviewFixtures.panel(PreviewFixtures.store(DemoData.services() + [PreviewFixtures.openCodeGo()]))
 }

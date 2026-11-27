@@ -1,7 +1,7 @@
 import Foundation
 
 enum MenuBarProvider: String, CaseIterable {
-    case claude, codex
+    case claude, codex, antigravity
     case openCodeGo = "opencode"
 
     private static let defaultsKey = "tinyusage.menuBarProviders"
@@ -11,6 +11,7 @@ enum MenuBarProvider: String, CaseIterable {
         switch self {
         case .claude: "Claude"
         case .codex: "Codex"
+        case .antigravity: AntigravityConfiguration.name
         case .openCodeGo: OpenCodeGoConfiguration.name
         }
     }
