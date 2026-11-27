@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/panel.png" width="460" alt="Tiny Usage 详情面板显示 Claude 和 Codex 的剩余额度、重置倒计时和重置卡">
+  <img src="docs/panel-202611271319.png" width="460" alt="Tiny Usage 详情面板显示 Claude、Codex 和 Antigravity 的剩余额度、重置倒计时和重置卡">
 </p>
 
 <p align="center">

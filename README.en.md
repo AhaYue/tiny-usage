@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/panel.png" width="460" alt="Tiny Usage details panel showing remaining Claude and Codex quotas, reset countdowns, and reset credits">
+  <img src="docs/panel-202611271319.png" width="460" alt="Tiny Usage details panel showing remaining Claude, Codex, and Antigravity quotas, reset countdowns, and reset credits">
 </p>
 
 <p align="center">
